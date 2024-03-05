@@ -28,6 +28,15 @@ export const loginUser = async (payload) => {
     }
 }
 
+export const getAllUsers = async () => {
+    try {
+        const response = await axiosInstance.post('/api/users/get-all-users');
+        return response.data;
+    } catch (error) {
+        return error.response.data;
+    }
+}
+
 export const getUserInfo = async () => {
     try {
         const response = await axiosInstance.post('/api/users/get-user-info');
@@ -49,6 +58,15 @@ export const updateUserInfo = async (payload) => {
 export const updateUserPhoto = async (payload) => {
     try {
         const response = await axiosInstance.post('/api/users/update-user-photo', payload);
+        return response.data;
+    } catch (error) {
+        return error.response.data;
+    }
+}
+
+export const blockUserById = async (payload) => {
+    try {
+        const response = await axiosInstance.patch('/api/users/block-user', payload);
         return response.data;
     } catch (error) {
         return error.response.data;
