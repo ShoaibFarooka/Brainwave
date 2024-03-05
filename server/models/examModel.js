@@ -14,6 +14,11 @@ const examSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    class: {
+      type: String,
+      required: true,
+      default: "default"
+    },
     totalMarks: {
       type: Number,
       required: true,

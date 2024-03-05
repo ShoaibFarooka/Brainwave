@@ -75,6 +75,12 @@ function ProtectedRoute({ children }) {
       onClick: () => navigate("/"),
     },
     {
+      title: "Users",
+      paths: ["/admin/users", "/admin/users/add"],
+      icon: <i className="ri-file-list-line"></i>,
+      onClick: () => navigate("/admin/users"),
+    },
+    {
       title: "Exams",
       paths: ["/admin/exams", "/admin/exams/add"],
       icon: <i className="ri-file-list-line"></i>,

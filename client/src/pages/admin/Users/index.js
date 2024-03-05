@@ -2,22 +2,23 @@ import { message, Table } from "antd";
 import React, { useEffect } from "react";
 import { useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import { deleteExamById, getAllExams } from "../../../apicalls/exams";
+import { getAllUsers,blockUserById } from "../../../apicalls/users";
 import PageTitle from "../../../components/PageTitle";
 import { HideLoading, ShowLoading } from "../../../redux/loaderSlice";
 
-function Exams() {
+function Users() {
   const navigate = useNavigate();
-  const [exams, setExams] = React.useState([]);
+  const [users, setUsers] = React.useState([]);
   const dispatch = useDispatch();
 
-  const getExamsData = async () => {
+  const getUsersData = async () => {
     try {
       dispatch(ShowLoading());
-      const response = await getAllExams();
+      const response = await getAllUsers();
       dispatch(HideLoading());
       if (response.success) {
-        setExams(response.data);
+        setUsers(response.users);
+        console.log('users',response)
       } else {
         message.error(response.message);
       }
@@ -26,17 +27,16 @@ function Exams() {
       message.error(error.message);
     }
   };
-
-  const deleteExam = async (examId) => {
+  const blockUser = async (studentId) => {
     try {
       dispatch(ShowLoading());
-      const response = await deleteExamById({
-        examId,
+      const response = await blockUserById({
+        studentId,
       });
       dispatch(HideLoading());
       if (response.success) {
         message.success(response.message);
-        getExamsData();
+        getUsersData();
       } else {
         message.error(response.message);
       }
@@ -45,69 +45,50 @@ function Exams() {
       message.error(error.message);
     }
   };
+
+ 
   const columns = [
     {
-      title: "Exam Name",
+      title: "Name",
       dataIndex: "name",
     },
     {
-      title: "Duration",
-      dataIndex: "duration",
+      title: "School",
+      dataIndex: "school",
     },
     {
       title: "Class",
       dataIndex: "class",
     },
     {
-      title: "Category",
-      dataIndex: "category",
-    },
-    {
-      title: "Total Marks",
-      dataIndex: "totalMarks",
-    },
-    {
-      title: "Passing Marks",
-      dataIndex: "passingMarks",
+      title: "Email",
+      dataIndex: "email",
     },
     {
       title: "Action",
       dataIndex: "action",
       render: (text, record) => (
         <div className="flex gap-2">
-          <i
-            className="ri-pencil-line"
-            onClick={() => navigate(`/admin/exams/edit/${record._id}`)}
-          ></i>
-          <i
-            className="ri-delete-bin-line"
-            onClick={() => deleteExam(record._id)}
-          ></i>
+          <button onClick={() => blockUser(record.studentId)}>
+            {record.isBlocked ? "Unblock" : "Block"}
+          </button>
         </div>
       ),
     },
   ];
   useEffect(() => {
-    getExamsData();
+    getUsersData();
   }, []);
   return (
     <div>
       <div className="flex justify-between mt-2 items-end">
-        <PageTitle title="Exams" />
-
-        <button
-          className="primary-outlined-btn flex items-center"
-          onClick={() => navigate("/admin/exams/add")}
-        >
-          <i className="ri-add-line"></i>
-          Add Exam
-        </button>
+        <PageTitle title="Users" />
       </div>
       <div className="divider"></div>
 
-      <Table columns={columns} dataSource={exams} />
+      <Table columns={columns} dataSource={users} rowKey={(record) => record.studentId} />
     </div>
   );
 }
 
-export default Exams;
+export default Users;
