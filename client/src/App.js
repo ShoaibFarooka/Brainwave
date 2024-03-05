@@ -12,6 +12,7 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import Quiz from "./pages/user/Quiz";
 import Exams from "./pages/admin/Exams";
 import AddEditExam from "./pages/admin/Exams/AddEditExam";
+import Users from "./pages/admin/Users";
 import Loader from "./components/Loader";
 import { useSelector } from "react-redux";
 import WriteExam from "./pages/user/WriteExam";
@@ -110,6 +111,14 @@ function App() {
           />
 
           {/* Admin Routes */}
+          <Route
+            path="/admin/users"
+            element={
+              <ProtectedRoute>
+                <Users />
+              </ProtectedRoute>
+            }
+          />
           <Route
             path="/admin/exams"
             element={

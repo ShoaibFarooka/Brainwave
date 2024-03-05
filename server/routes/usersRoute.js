@@ -161,24 +161,35 @@ router.post("/login", async (req, res) => {
 router.get("/get-all-users", async (req, res) => {
   try {
     const users = await User.find({ isAdmin: false }); // Filter for non-admin users
-    if(users && users.length>0){
+    if (users && users.length > 0) {
+      
+      const simplifiedUsers = users.map(user => ({
+        studentId: user._id,
+        name: user.name,
+        school: user.school,
+        class: user.class,
+        email: user.email,
+        profileImage: user.profileImage,
+        isAdmin: user.isAdmin,
+        isBlocked: user.isBlocked
+      }));
       res.send({
-        users,
+        users: simplifiedUsers,
         success: true,
       });
-    }else{
+    } else {
       console.error("No User Found");
       res.status(404).send({
-        message:"No User Found",
+        message: "No User Found",
         success: false,
-      })
+      });
     }
   } catch (error) {
     console.error(error);
     res.status(500).send({ message: error.message });
-    
   }
 });
+
 
 // get user info
 
@@ -290,6 +301,7 @@ router.post("/update-user-photo", upload.single('profileImage'), authMiddleware,
 // block user
 router.patch("/block-user",async (req, res) => {
   try {
+    console.log('request :', req.body);
     const { studentId } = req.body
     if(!studentId){
       return res.status(400).send({ message: "UserId is not provided" });
@@ -304,11 +316,20 @@ router.patch("/block-user",async (req, res) => {
        return res.status(403).send({ message: "Cannot block admin users" });
      }
  
-     await User.findByIdAndUpdate(studentId,{ isBlocked: !user.isBlocked }, { new: true });
-      res.send({
-        message: "User is blocked successfully",
-        success: true,
-      });
+     const updatedUser = await User.findByIdAndUpdate(studentId,{ isBlocked: !user.isBlocked }, { new: true });
+    
+        if(updatedUser.isBlocked){
+          res.send({
+            message: "User is blocked successfully",
+            success: true,
+          });
+        }else{
+          res.send({
+            message: "User is unblocked successfully",
+            success: true,
+          });
+        }
+        
     }
   catch (error) {
     console.log(error);

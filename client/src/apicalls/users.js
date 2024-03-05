@@ -30,7 +30,8 @@ export const loginUser = async (payload) => {
 
 export const getAllUsers = async () => {
     try {
-        const response = await axiosInstance.post('/api/users/get-all-users');
+        const response = await axiosInstance.get('/api/users/get-all-users');
+        console.log("data :", response.data);
         return response.data;
     } catch (error) {
         return error.response.data;

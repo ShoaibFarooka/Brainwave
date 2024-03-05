@@ -15,11 +15,7 @@ const reviewsRoute = require("./routes/reviewsRoute");
 const forumQuestionRoute = require("./routes/forumQuestionRoute");
 
 //Express Middlewares
-app.use(cors({
-  // origin: "https://www.stjosephkibadaengine.com"
-  origin: "http://localhost:3001"
-
-}));
+app.use(cors());
 app.use('/uploads', express.static(path.join(__dirname, 'Photos')));
 
 //Server Status Endpoint

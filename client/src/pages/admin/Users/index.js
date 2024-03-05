@@ -17,7 +17,8 @@ function Users() {
       const response = await getAllUsers();
       dispatch(HideLoading());
       if (response.success) {
-        setUsers(response.data);
+        setUsers(response.users);
+        console.log('users',response)
       } else {
         message.error(response.message);
       }
@@ -68,11 +69,9 @@ function Users() {
       dataIndex: "action",
       render: (text, record) => (
         <div className="flex gap-2">
-          
-          <i
-            className="ri-delete-bin-line"
-            onClick={() => blockUser(record._id)}
-          ></i>
+          <button onClick={() => blockUser(record.studentId)}>
+            {record.isBlocked ? "Unblock" : "Block"}
+          </button>
         </div>
       ),
     },
@@ -87,7 +86,7 @@ function Users() {
       </div>
       <div className="divider"></div>
 
-      <Table columns={columns} dataSource={users} />
+      <Table columns={columns} dataSource={users} rowKey={(record) => record.studentId} />
     </div>
   );
 }
