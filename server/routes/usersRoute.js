@@ -122,6 +122,12 @@ router.post("/login", async (req, res) => {
         .send({ message: "User does not exist", success: false });
     }
 
+    if (user.isBlocked) {
+      return res
+        .status(403)
+        .send({ message: "You are blocked. Please contact your moderator", success: false });
+    }
+
     // check password
     const validPassword = await bcrypt.compare(
       req.body.password,
@@ -150,6 +156,40 @@ router.post("/login", async (req, res) => {
     });
   }
 });
+
+// get all users
+router.get("/get-all-users", async (req, res) => {
+  try {
+    const users = await User.find({ isAdmin: false }); // Filter for non-admin users
+    if (users && users.length > 0) {
+      
+      const simplifiedUsers = users.map(user => ({
+        studentId: user._id,
+        name: user.name,
+        school: user.school,
+        class: user.class,
+        email: user.email,
+        profileImage: user.profileImage,
+        isAdmin: user.isAdmin,
+        isBlocked: user.isBlocked
+      }));
+      res.send({
+        users: simplifiedUsers,
+        success: true,
+      });
+    } else {
+      console.error("No User Found");
+      res.status(404).send({
+        message: "No User Found",
+        success: false,
+      });
+    }
+  } catch (error) {
+    console.error(error);
+    res.status(500).send({ message: error.message });
+  }
+});
+
 
 // get user info
 
@@ -257,6 +297,50 @@ router.post("/update-user-photo", upload.single('profileImage'), authMiddleware,
     });
   }
 });
+
+// block user
+router.patch("/block-user",async (req, res) => {
+  try {
+    console.log('request :', req.body);
+    const { studentId } = req.body
+    if(!studentId){
+      return res.status(400).send({ message: "UserId is not provided" });
+    }
+     // Find user and check if admin
+     const user = await User.findById(studentId); // Use findById to avoid unnecessary update
+     if (!user) {
+       return res.status(404).send({ message: "User not found" });
+     }
+ 
+     if (user.isAdmin) {
+       return res.status(403).send({ message: "Cannot block admin users" });
+     }
+ 
+     const updatedUser = await User.findByIdAndUpdate(studentId,{ isBlocked: !user.isBlocked }, { new: true });
+    
+        if(updatedUser.isBlocked){
+          res.send({
+            message: "User is blocked successfully",
+            success: true,
+          });
+        }else{
+          res.send({
+            message: "User is unblocked successfully",
+            success: true,
+          });
+        }
+        
+    }
+  catch (error) {
+    console.log(error);
+    res.status(500).send({
+      message: error.message,
+      data: error,
+      success: false,
+    });
+  }
+});
+
 
 module.exports = router;
 
