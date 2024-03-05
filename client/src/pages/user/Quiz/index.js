@@ -76,12 +76,13 @@ const filteredExams = exams.filter((exam) =>
         {/* Search input field */}
         <input
           type="text"
+          className="w-25 mb-2"
           placeholder="Search exams"
           value={searchQuery}
           onChange={handleSearch}
         />
         {shouldRenderFilteredExams && (
-          <div>
+          <div className="mb-2">
             <span>{`Filtered ${filteredExams.length} out of ${exams.length}`}</span>
           </div>
         )}
