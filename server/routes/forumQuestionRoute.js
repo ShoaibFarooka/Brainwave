@@ -53,10 +53,13 @@ router.post("/add-reply", authMiddleware, async (req, res) => {
 // get all questions
 
 router.get("/get-all-questions", authMiddleware, async (req, res) => {
+    const startTime = performance.now();
     try {
         const questions = await forumQuestion.find()
             .populate('user')
             .populate('replies.user');
+        const endTime = performance.now();
+        console.log('Time taken in miliseconds by forum endpoint', endTime - startTime);
         res.send({
             message: "questions fetched successfully",
             data: questions,

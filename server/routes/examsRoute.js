@@ -33,7 +33,10 @@ router.post("/add", authMiddleware, async (req, res) => {
 // get all exams
 router.post("/get-all-exams", authMiddleware, async (req, res) => {
   try {
+    const startTime = performance.now();
     const exams = await Exam.find({});
+    const endTime = performance.now();
+    console.log('miliseconds', endTime - startTime);
     res.send({
       message: "Exams fetched successfully",
       data: exams,

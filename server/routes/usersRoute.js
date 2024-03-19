@@ -195,14 +195,13 @@ router.get("/get-all-users", async (req, res) => {
 
 router.post("/get-user-info", authMiddleware, async (req, res) => {
   try {
+
     const user = await User.findById(req.body.userId);
-    setTimeout(() => {
       res.send({
         message: "User info fetched successfully",
         success: true,
         data: user,
       });
-    }, 5000);
   } catch (error) {
     res.status(500).send({
       message: error.message,
