@@ -21,10 +21,20 @@ const bookSchema = new mongoose.Schema({
         type: String,
         required: true,
     },
+    documentUrl: {
+        type: String,
+        required: false,
+    },
     thumbnail: {
         type: String,
         required: true,
     },
+    schoolType: {
+        type: String,
+        enum: ["primary", "secondary"],
+        default: "primary", 
+        required: false,   
+      },
 });
 
 const Books = mongoose.model("books", bookSchema);

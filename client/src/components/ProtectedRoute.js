@@ -20,6 +20,7 @@ function ProtectedRoute({ children }) {
       icon: <i className="ri-pencil-line"></i>,
       onClick: () => navigate("/user/quiz"),
     },
+   
     {
       title: "Reports",
       paths: ["/user/reports"],
@@ -45,6 +46,12 @@ function ProtectedRoute({ children }) {
       onClick: () => navigate("/user/about-us"),
     },
     {
+      title: "AI Chat",
+      paths: ["/user/chat"],
+      icon: <i className="ri-chat-smile-2-line"></i>,
+      onClick: () => navigate("/user/chat"),
+    },
+    {
       title: "Forum",
       paths: ["/forum"],
       icon: <i className="ri-discuss-line"></i>,
@@ -68,12 +75,7 @@ function ProtectedRoute({ children }) {
   ];
 
   const adminMenu = [
-    {
-      title: "Home",
-      paths: ["/", "/user/write-exam"],
-      icon: <i className="ri-home-line"></i>,
-      onClick: () => navigate("/"),
-    },
+   
     {
       title: "Users",
       paths: ["/admin/users", "/admin/users/add"],
