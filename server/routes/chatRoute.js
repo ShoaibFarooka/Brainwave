@@ -5,7 +5,9 @@ const router = express.Router();
 
 
 router.post("/chat", async (req, res) => {
+  console.log('Data: ', req.body);
   try {
+    const start = performance.now();
     const { messages } = req.body;
 
     const response = await axios.post(
@@ -24,6 +26,8 @@ router.post("/chat", async (req, res) => {
       }
     );
 
+    const end = performance.now();
+    console.log('Time taken by openai api (s): ', (end - start) / 1000);
     res.status(200).json({ success: true, data: response.data.choices[0].message.content });
   } catch (error) {
     console.error("Error fetching GPT-4 response:", error);
