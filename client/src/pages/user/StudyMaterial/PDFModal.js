@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import * as pdfjsLib from "pdfjs-dist";
 import ReactModal from "react-modal";
+ReactModal.setAppElement('#root');
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@2.15.349/build/pdf.worker.min.js`;
 
