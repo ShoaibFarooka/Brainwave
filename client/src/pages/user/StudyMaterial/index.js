@@ -7,6 +7,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { HideLoading, ShowLoading } from "../../../redux/loaderSlice";
 import Modal from "react-modal";
 import PDFModal from "./PDFModal";
+import { FaPlayCircle } from "react-icons/fa";
 
 function StudyMaterial() {
   const [content, setContent] = useState("default");
@@ -333,18 +334,33 @@ function StudyMaterial() {
                   </div>
                   {!showVideoIndices.includes(index) ? (
                     <div className="flex items-center">
-                      {/* Thumbnail display */}
-                      <div style={{ width: "100%" }}>
-                        <img
-                          src={video.thumbnail}
-                          alt={`Thumbnail for ${video.title}`}
-                          className="video-thumbnail cursor-pointer"
-                          onClick={() => handleShowVideo(index)}
-                          style={{ width: "200px" }}
-                        />
+                      <div style={{width:"100%"}}>
+                        <div style={{ position: "relative", widows:"400px" }}>
+                          <img
+                            src={video.thumbnail}
+                            alt={`Thumbnail for ${video.title}`}
+                            className="video-thumbnail cursor-pointer"
+                            onClick={() => handleShowVideo(index)}
+                            style={{ width: "400px", height: "227px" }}
+                          />
+                          <div
+                            className="play-button"
+                            onClick={() => handleShowVideo(index)}
+                            style={{
+                              position: "absolute",
+                              top: "50%",
+                              left: "200px",
+                              transform: "translate(-50%, -50%)",
+                              cursor: "pointer",
+                            }}
+                          >
+                            <FaPlayCircle fontSize={50} color="#0F3460" />
+                          </div>
+                        </div>
                       </div>
+
                       <button
-                        className="btn mt-2"
+                        className="btn mt-2 "
                         onClick={() => handleShowVideo(index)}
                       >
                         Watch Video

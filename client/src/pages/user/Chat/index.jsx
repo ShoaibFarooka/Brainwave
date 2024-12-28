@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import axios from "axios";
 import "./index.css"; // Import the custom CSS
 import { uploadImg } from "../../../apicalls/image";
+import { chatWithChatGPT } from "../../../apicalls/chat";
 
 function ChatGPTIntegration() {
   const [messages, setMessages] = useState([]);
@@ -41,11 +42,13 @@ function ChatGPTIntegration() {
       setMessages(updatedMessages);
       setPrompt("");
       
-      const chatRes = await axios.post("http://localhost:5000/api/chatgpt/chat", {
+      const chatPayload = {
         messages: updatedMessages,
-      });
+      }
       
-      const apiResponse = chatRes.data.data;
+      const chatRes = await chatWithChatGPT(chatPayload);
+      
+      const apiResponse = chatRes?.data;
       
       // Append assistant's response to the conversation
       setMessages((prev) => [...prev, { role: "assistant", content: apiResponse }]);
@@ -110,7 +113,7 @@ function ChatGPTIntegration() {
             Upload Image
           </label>
         </button> */}
-        <button className="send-button" onClick={handleChat}>
+        <button disabled={isLoading} className="send-button" onClick={handleChat}>
           Send
         </button>
       </div>

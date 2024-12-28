@@ -1,47 +1,96 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import * as pdfjsLib from "pdfjs-dist";
 import ReactModal from "react-modal";
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@2.15.349/build/pdf.worker.min.js`;
 
 const PDFModal = ({ modalIsOpen, closeModal, documentUrl }) => {
-  const canvasRef = useRef(null);
+  const [pages, setPages] = useState([]);
+  const canvasRefs = useRef([]);
+  const containerRef = useRef(null);
+  const renderingRefs = useRef({}); // Track rendering state per page
 
-  const renderPDF = (url) => {
-    const loadingTask = pdfjsLib.getDocument(url);  
-    loadingTask.promise
-      .then((pdf) => {
-        console.log("PDF loaded");
+  const renderPDF = async (url) => {
+    try {
+      const pdf = await pdfjsLib.getDocument(url).promise;
+      console.log("PDF loaded");
+      
+      const pagesData = [];
+      for (let i = 1; i <= pdf.numPages; i++) {
+        const page = await pdf.getPage(i);
+        pagesData.push(page);
+      }
+      
+      console.log("All pages loaded:", pagesData.length);
+      setPages(pagesData);
+    } catch (error) {
+      console.error("Error loading PDF:", error);
+    }
+  };
 
-        return pdf.getPage(1);
-      })
-      .then((page) => {
-        console.log("Page loaded");
+  const renderPage = async (page, index) => {
+    const canvas = canvasRefs.current[index];
+    if (!canvas || renderingRefs.current[index] || !containerRef.current) return;
 
-        const scale = 1.5; 
-        const viewport = page.getViewport({ scale: scale });
+    try {
+      renderingRefs.current[index] = true;
+      
+      const viewport = page.getViewport({ scale: 1.0 });
+      const containerWidth = containerRef.current.clientWidth;
+      const scale = containerWidth / viewport.width;
+      const scaledViewport = page.getViewport({ scale });
+      
+      const context = canvas.getContext("2d");
+      canvas.height = scaledViewport.height;
+      canvas.width = scaledViewport.width;
+      canvas.style.width = '100%';
+      canvas.style.height = 'auto';
 
-        const canvas = canvasRef.current;
-        const context = canvas.getContext("2d");
-        canvas.height = viewport.height;
-        canvas.width = viewport.width;
+      const renderContext = {
+        canvasContext: context,
+        viewport: scaledViewport,
+      };
 
-        const renderContext = {
-          canvasContext: context,
-          viewport: viewport,
-        };
-        page.render(renderContext);
-      })
-      .catch((error) => {
-        console.error("Error loading PDF:", error);
-      });
+      await page.render(renderContext).promise;
+      console.log(`Page ${index + 1} rendered`);
+    } catch (error) {
+      console.error(`Error rendering page ${index + 1}:`, error);
+    } finally {
+      renderingRefs.current[index] = false;
+    }
   };
 
   useEffect(() => {
     if (modalIsOpen && documentUrl) {
-      renderPDF(documentUrl); 
+      setPages([]);
+      canvasRefs.current = [];
+      renderingRefs.current = {};
+      renderPDF(documentUrl);
     }
   }, [modalIsOpen, documentUrl]);
+
+  // Effect to render pages when they're loaded
+  useEffect(() => {
+    if (pages.length > 0 && containerRef.current) {
+      pages.forEach((page, index) => {
+        renderPage(page, index);
+      });
+    }
+  }, [pages, containerRef.current]);
+
+  // Re-render pages when window is resized
+  useEffect(() => {
+    const handleResize = () => {
+      if (pages.length > 0) {
+        pages.forEach((page, index) => {
+          renderPage(page, index);
+        });
+      }
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [pages]);
 
   return (
     <ReactModal
@@ -49,19 +98,21 @@ const PDFModal = ({ modalIsOpen, closeModal, documentUrl }) => {
       onRequestClose={closeModal}
       contentLabel="Document Preview"
       style={{
+        overlay: {
+          backgroundColor: 'rgba(0, 0, 0, 0.75)'
+        },
         content: {
-          top: "50%",
-          left: "50%",
-          right: "auto",
-          bottom: "auto",
-          marginRight: "-50%",
-          transform: "translate(-50%, -50%)",
-          width: "50%",
-          height: "80%",
-          padding: "20px",
-          borderRadius: "10px",
-          display: "flex",
-          flexDirection: "column",
+          top: '50%',
+          left: '50%',
+          right: 'auto',
+          bottom: 'auto',
+          marginRight: '-50%',
+          transform: 'translate(-50%, -50%)',
+          width: '70%',
+          height: '90%',
+          padding: '20px',
+          borderRadius: '10px',
+          overflow: 'hidden',
         },
       }}
     >
@@ -75,16 +126,41 @@ const PDFModal = ({ modalIsOpen, closeModal, documentUrl }) => {
           border: "none",
           fontSize: "20px",
           cursor: "pointer",
+          zIndex: 1,
         }}
       >
         X
       </button>
 
-      <div style={{ flex: "1", display: "flex", flexDirection: "column", justifyContent: "center" }}>
-        <canvas ref={canvasRef} style={{ width: "100%", height: "auto" }} />
+      <div 
+        ref={containerRef}
+        style={{
+          height: '100%',
+          overflow: 'auto',
+          padding: '10px',
+        }}
+      >
+        {pages.map((page, index) => (
+          <div 
+            key={index} 
+            style={{ 
+              marginBottom: '20px',
+              display: 'flex',
+              justifyContent: 'center'
+            }}
+          >
+            <canvas
+              ref={element => {
+                canvasRefs.current[index] = element;
+              }}
+              style={{
+                maxWidth: '100%',
+                height: 'auto'
+              }}
+            />
+          </div>
+        ))}
       </div>
-
-     
     </ReactModal>
   );
 };
