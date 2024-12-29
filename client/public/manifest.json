@@ -1,9 +1,9 @@
 {
-  "short_name": "St Joseph Online",
-  "name": "St Joseph Kibada Online Study App",
+  "short_name": "BRAINWAVE",
+  "name": "BRAINWAVE",
   "icons": [
     {
-      "src": "logo.png",
+      "src": "favicon.png",
       "sizes": "64x64 32x32 24x24 16x16",
       "type": "image/x-icon"
     }
