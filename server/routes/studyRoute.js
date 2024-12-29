@@ -24,7 +24,6 @@ router.post("/get-study-content", async (req, res) => {
             }
         }
         else if (content === "past-papers") {
-            console.log(filter,"filter")
             const papers = await PastPapers.find(filter);
             if (papers.length > 0 && papers) {
                 res.status(200).json(papers);

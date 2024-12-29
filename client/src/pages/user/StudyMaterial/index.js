@@ -85,6 +85,9 @@ function StudyMaterial() {
       className: userClass,
       subject,
     };
+    if (userSchoolType) {
+      data.schoolType = userSchoolType;
+    }
     dispatch(ShowLoading());
     const res = await getStudyMaterial(data);
     if (data.content === "study-notes") {
@@ -334,8 +337,8 @@ function StudyMaterial() {
                   </div>
                   {!showVideoIndices.includes(index) ? (
                     <div className="flex items-center">
-                      <div style={{width:"100%"}}>
-                        <div style={{ position: "relative", widows:"400px" }}>
+                      <div style={{ width: "100%" }}>
+                        <div style={{ position: "relative", widows: "400px" }}>
                           <img
                             src={video.thumbnail}
                             alt={`Thumbnail for ${video.title}`}
@@ -374,6 +377,7 @@ function StudyMaterial() {
                           width="400px"
                           src={video.videoUrl}
                           className="mt-2"
+                          autoPlay={true}
                         >
                           Your browser does not support the video tag.
                         </video>
@@ -409,6 +413,11 @@ function StudyMaterial() {
                     <b>Year: </b>
                     {book.year}
                   </div>
+                  {book.thumbnail &&
+                    <div className="thumbnail-container">
+                      <img src={book.thumbnail} alt="book-thumbnail" className="thumbnail" />
+                    </div>
+                  }
                   {book.documentUrl ? (
                     <div className="thumbnail-container">
                       <div className="button-container">

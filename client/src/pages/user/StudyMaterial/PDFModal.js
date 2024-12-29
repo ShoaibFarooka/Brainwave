@@ -15,13 +15,13 @@ const PDFModal = ({ modalIsOpen, closeModal, documentUrl }) => {
     try {
       const pdf = await pdfjsLib.getDocument(url).promise;
       console.log("PDF loaded");
-      
+
       const pagesData = [];
       for (let i = 1; i <= pdf.numPages; i++) {
         const page = await pdf.getPage(i);
         pagesData.push(page);
       }
-      
+
       console.log("All pages loaded:", pagesData.length);
       setPages(pagesData);
     } catch (error) {
@@ -35,12 +35,12 @@ const PDFModal = ({ modalIsOpen, closeModal, documentUrl }) => {
 
     try {
       renderingRefs.current[index] = true;
-      
+
       const viewport = page.getViewport({ scale: 1.0 });
       const containerWidth = containerRef.current.clientWidth;
       const scale = containerWidth / viewport.width;
       const scaledViewport = page.getViewport({ scale });
-      
+
       const context = canvas.getContext("2d");
       canvas.height = scaledViewport.height;
       canvas.width = scaledViewport.width;
@@ -133,21 +133,23 @@ const PDFModal = ({ modalIsOpen, closeModal, documentUrl }) => {
         X
       </button>
 
-      <div 
+      <div
         ref={containerRef}
         style={{
           height: '100%',
           overflow: 'auto',
           padding: '10px',
+          scrollbarWidth: 'thin'
         }}
       >
         {pages.map((page, index) => (
-          <div 
-            key={index} 
-            style={{ 
-              marginBottom: '20px',
+          <div
+            key={index}
+            style={{
+              marginBottom: '10px',
               display: 'flex',
-              justifyContent: 'center'
+              flexDirection: 'column',
+              alignItems: 'center'
             }}
           >
             <canvas
@@ -156,7 +158,8 @@ const PDFModal = ({ modalIsOpen, closeModal, documentUrl }) => {
               }}
               style={{
                 maxWidth: '100%',
-                height: 'auto'
+                height: 'auto',
+                border: '1px solid black'
               }}
             />
           </div>
