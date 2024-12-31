@@ -1,5 +1,6 @@
 import { message } from "antd";
 import React, { useEffect, useState } from "react";
+import Flag from '../assets/tanzania-flag.png';
 import { getUserInfo } from "../apicalls/users";
 import { useDispatch, useSelector } from "react-redux";
 import { SetUser } from "../redux/usersSlice.js";
@@ -20,7 +21,7 @@ function ProtectedRoute({ children }) {
       icon: <i className="ri-pencil-line"></i>,
       onClick: () => navigate("/user/quiz"),
     },
-   
+
     {
       title: "Reports",
       paths: ["/user/reports"],
@@ -75,7 +76,7 @@ function ProtectedRoute({ children }) {
   ];
 
   const adminMenu = [
-   
+
     {
       title: "Users",
       paths: ["/admin/users", "/admin/users/add"],
@@ -205,7 +206,10 @@ function ProtectedRoute({ children }) {
                 onClick={() => setCollapsed(false)}
               ></i>
             )}
-            <h1 className={`text-white ${isMobile ? 'text-xs' : 'text-2xl'}`}>ST JOSEPH KIBADA ONLINE STUDY APP</h1>
+            <div className="flex items-center gap-1">
+              <div className={`text-white ${isMobile ? 'text-xs' : 'text-2xl'}`}>BRAINWAVE</div>
+              <img src={Flag} alt="tanzania-flag" style={{ width: '30px', height: '30px' }} />
+            </div>
             <div>
               <div className="flex gap-1 items-center">
                 <h1 className={`text-white ${isMobile ? 'text-xs' : 'text-md'}`}>{user?.name}</h1>
