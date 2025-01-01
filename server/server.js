@@ -1,5 +1,7 @@
 const express = require("express");
 const app = express();
+const morgan = require('morgan');
+const chalk = require('chalk');
 require("dotenv").config();
 const dbConfig = require("./config/dbConfig");
 const cors = require('cors')
@@ -22,6 +24,16 @@ require("./routes/testFile")
 
 // }));
 app.use(cors());
+morgan.format('short', (tokens, req, res) => {
+  const method = tokens.method(req, res);
+  const url = tokens.url(req, res);
+  const status = tokens.status(req, res);
+  const responseTime = Math.round(tokens['response-time'](req, res)); // Remove decimals
+  let colorStatus = status >= 400 ? chalk.red(status) : chalk.green(status);
+
+  return `${chalk.blue(method)} ${chalk.yellow(url)} ${colorStatus} ${responseTime}ms`;
+});
+app.use(morgan('short'))
 app.use('/uploads', express.static(path.join(__dirname, 'Photos')));
 app.use(express.json({ limit: "110mb" })); // Adjust the limit as needed
 app.use(express.urlencoded({ limit: "110mb", extended: true }));

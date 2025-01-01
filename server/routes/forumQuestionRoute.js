@@ -1,5 +1,5 @@
 const router = require("express").Router();
-const forumQuestion = require("../models/forumQuestionModel");
+const ForumQuestion = require("../models/forumQuestionModel");
 const authMiddleware = require("../middlewares/authMiddleware");
 const User = require("../models/userModel");
 
@@ -23,7 +23,7 @@ router.post("/add-question", authMiddleware, async (req, res) => {
 
     try {
         const { title, body, userId } = req.body;
-        const newForumQuestion = new forumQuestion({
+        const newForumQuestion = new ForumQuestion({
             title,
             body,
             user: userId,
@@ -61,7 +61,7 @@ router.post("/add-reply", authMiddleware, async (req, res) => {
     const userSchoolType = user.schoolType;
     try {
         const { text, questionId, userId } = req.body;
-        const question = await forumQuestion.findById(questionId);
+        const question = await ForumQuestion.findById(questionId);
         question.replies.push({
             text,
             user: userId,
@@ -98,6 +98,7 @@ router.get("/get-all-questions", authMiddleware, async (req, res) => {
     }
 
     const userSchoolType = user.schoolType;
+    const isAdmin = user.isAdmin;
 
     try {
         // Extract page and limit from query parameters, with default values
@@ -116,8 +117,12 @@ router.get("/get-all-questions", authMiddleware, async (req, res) => {
             filter = { schoolType: { $ne: "secondary" } }; // Exclude "secondary"
         }
 
+        if (isAdmin) {
+            filter = {};
+        }
+
         // Fetch questions with the defined filter and pagination
-        const questions = await forumQuestion
+        const questions = await ForumQuestion
             .find(filter)
             .populate("user")
             .populate("replies.user")
@@ -125,10 +130,10 @@ router.get("/get-all-questions", authMiddleware, async (req, res) => {
             .limit(limit);
 
         // Get the total count of questions matching the filter
-        const totalQuestions = await forumQuestion.countDocuments(filter);
+        const totalQuestions = await ForumQuestion.countDocuments(filter);
 
         const endTime = performance.now();
-        console.log("Time taken in milliseconds by forum endpoint", endTime - startTime);
+        // console.log("Time taken in milliseconds by forum endpoint", endTime - startTime);
 
         res.send({
             message: "Questions fetched successfully",
@@ -152,7 +157,7 @@ router.get("/get-all-questions", authMiddleware, async (req, res) => {
 router.delete("/delete-question/:questionId", authMiddleware, async (req, res) => {
     try {
         const { questionId } = req.params;
-        const deletedQuestion = await forumQuestion.findByIdAndDelete(questionId);
+        const deletedQuestion = await ForumQuestion.findByIdAndDelete(questionId);
         if (!deletedQuestion) {
             return res.send({
                 message: "Unable to delete question",
@@ -191,7 +196,7 @@ router.put("/update-question/:questionId", authMiddleware, async (req, res) => {
         const { questionId } = req.params;
         const { title, body } = req.body;
 
-        const updatedQuestion = await forumQuestion.findByIdAndUpdate(questionId, { title, body, schoolType: userSchoolType });
+        const updatedQuestion = await ForumQuestion.findByIdAndUpdate(questionId, { title, body, schoolType: userSchoolType });
         if (!updatedQuestion) {
             return res.send({
                 message: "Unable to update question",
@@ -221,7 +226,7 @@ router.put("/update-reply-status/:questionId", authMiddleware, async (req, res) 
                 message: "QuestionId, replyId and status are required."
             });
         }
-        const question = await forumQuestion.findById(questionId);
+        const question = await ForumQuestion.findById(questionId);
         if (!question) {
             return res.status(404).send({
                 success: false,
