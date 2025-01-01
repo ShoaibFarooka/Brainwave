@@ -15,7 +15,7 @@ router.post("/chat", async (req, res) => {
       {
         model: "gpt-4o",
         messages,
-        max_tokens: 100,
+        // max_tokens: 100,
         temperature: 0.5,
       },
       {

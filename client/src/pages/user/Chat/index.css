@@ -2,7 +2,7 @@
 .chat-container {
     display: flex;
     flex-direction: column;
-    height: 86vh;
+    height: 85vh;
     background-color: #f8f9fa;
   }
   
