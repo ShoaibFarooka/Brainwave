@@ -7,7 +7,12 @@ const nodemailer = require("nodemailer");
 const multer = require("multer");
 const { Storage } = require("@google-cloud/storage");
 const { v4: uuidv4 } = require("uuid");
-const AWS = require('aws-sdk');
+const AWS = require("aws-sdk");
+const Review = require("../models/reviewModel");
+const Report = require("../models/reportModel");
+const forumQuestion = require("../models/forumQuestionModel");
+const mongoose = require("mongoose");
+
 // Configure Multer Memory Storage
 const storage = multer.memoryStorage();
 const upload = multer({ storage });
@@ -129,12 +134,10 @@ router.post("/login", async (req, res) => {
     }
 
     if (user.isBlocked) {
-      return res
-        .status(403)
-        .send({
-          message: "You are blocked. Please contact your moderator",
-          success: false,
-        });
+      return res.status(403).send({
+        message: "You are blocked. Please contact your moderator",
+        success: false,
+      });
     }
 
     // check password
@@ -257,7 +260,11 @@ router.post("/update-user-info", authMiddleware, async (req, res) => {
   }
 });
 
-router.post("/update-user-photo", upload.single("profileImage"), authMiddleware, async (req, res) => {
+router.post(
+  "/update-user-photo",
+  upload.single("profileImage"),
+  authMiddleware,
+  async (req, res) => {
     try {
       const { userId } = req.body;
       const profilePic = req.file;
@@ -347,6 +354,54 @@ router.patch("/block-user", async (req, res) => {
       });
     }
   } catch (error) {
+    console.log(error);
+    res.status(500).send({
+      message: error.message,
+      data: error,
+      success: false,
+    });
+  }
+});
+
+// delete user
+router.delete("/delete-user", async (req, res) => {
+  const session = await mongoose.startSession(); 
+  session.startTransaction();
+
+  try {
+    const { studentId } = req.body;
+
+    if (!studentId) {
+      return res.status(400).send({ message: "UserId is not provided" });
+    }
+
+    const user = await User.findById(studentId).session(session);
+    if (!user) {
+      return res.status(404).send({ message: "User not found" });
+    }
+
+    if (user.isAdmin) {
+      return res.status(403).send({ message: "Cannot delete admin users" });
+    }
+
+    await User.findByIdAndDelete(studentId).session(session);
+
+    await Review.deleteMany({ user: user._id }).session(session);
+    await Report.deleteMany({ user: user._id }).session(session);
+    await forumQuestion.deleteMany({ user: user._id }).session(session);
+
+    await session.commitTransaction();
+    session.endSession();
+
+    res.send({
+      message: "User deleted successfully, along with all related data",
+      success: true,
+    });
+  } catch (error) {
+    // Abort transaction on error
+    await session.abortTransaction();
+    session.endSession();
+
     console.log(error);
     res.status(500).send({
       message: error.message,
