@@ -6,9 +6,11 @@ const AWS = require("aws-sdk");
 const { v4: uuidv4 } = require("uuid");
 const User = require("../models/userModel");
 const multer = require("multer");
+const Report = require("../models/reportModel");
 // Configure Multer Memory Storage
 const storage = multer.memoryStorage();
 const upload = multer({ storage });
+const mongoose = require("mongoose");
 
 const s3 = new AWS.S3({
   accessKeyId: process.env.AWS_ACCESS_KEY_ID,
@@ -126,21 +128,40 @@ router.post("/edit-exam-by-id", authMiddleware, async (req, res) => {
 });
 
 // delete exam by id
+
 router.post("/delete-exam-by-id", authMiddleware, async (req, res) => {
+  const session = await mongoose.startSession(); 
+  session.startTransaction();
+
   try {
-    await Exam.findByIdAndDelete(req.body.examId);
+    const deletedExam = await Exam.findByIdAndDelete(req.body.examId).session(session);
+
+    if (!deletedExam) {
+      throw new Error("Exam not found");
+    }
+
+    const deleteReportsResult = await Report.deleteMany({ exam: req.body.examId }).session(session);
+
+    await session.commitTransaction();
+    session.endSession();
+
     res.send({
-      message: "Exam deleted successfully",
+      message: "Exam and related reports deleted successfully",
       success: true,
+      deletedReportsCount: deleteReportsResult.deletedCount, 
     });
   } catch (error) {
+    await session.abortTransaction();
+    session.endSession();
+
     res.status(500).send({
-      message: error.message,
+      message: error.message || "Failed to delete exam and reports",
       data: error,
       success: false,
     });
   }
 });
+
 
 // add question to exam
 
