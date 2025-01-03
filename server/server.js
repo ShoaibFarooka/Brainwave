@@ -16,7 +16,7 @@ const reviewsRoute = require("./routes/reviewsRoute");
 const forumQuestionRoute = require("./routes/forumQuestionRoute");
 const chatgptRoute = require("./routes/chatRoute");
 const awsBucketRoute = require("./uploads/awsBucket");
-require("./routes/testFile")
+
 //Express Middlewares 
 // app.use(cors({
 //   origin: "https://www.stjosephkibadaengine.com"
@@ -24,6 +24,7 @@ require("./routes/testFile")
 
 // }));
 app.use(cors());
+
 morgan.format('short', (tokens, req, res) => {
   const method = tokens.method(req, res);
   const url = tokens.url(req, res);
