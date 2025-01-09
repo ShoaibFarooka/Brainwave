@@ -3,12 +3,23 @@ const Plan = require("../models/planModel");
 const createPlan = async () => {
   try {
     const newPlan = new Plan({
-      title: "Basic Plan",
-      description: "This is a basic subscription plan.",
-      actualPrice: 200,
-      discuntedPrice:100,
-      discuntPercentage:20,
-      duration: 1, // in days
+      title: "Basic Membership",
+      features: [
+        "2-month full access",
+        "Unlimited quizzes",
+        "Personalized profile",
+        "AI chat for instant help",
+        "Forum for student discussions",
+        "Study notes",
+        "Past papers",
+        "books",
+        "Learning videos",
+        "Track progress with rankings"
+      ],
+      actualPrice: 28570,
+      discuntedPrice: 20000,
+      discuntPercentage: 30,
+      duration: 2, // in months
       status: true,
     });
 

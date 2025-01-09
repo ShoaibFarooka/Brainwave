@@ -7,7 +7,7 @@ const planSchema = new mongoose.Schema({
     trim: true,
   },
   features: {
-    type: Array,
+    type: [String],
     required: true,
     trim: true,
   },
