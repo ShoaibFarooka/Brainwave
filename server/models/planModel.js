@@ -6,8 +6,8 @@ const planSchema = new mongoose.Schema({
     required: true,
     trim: true,
   },
-  description: {
-    type: String,
+  features: {
+    type: Array,
     required: true,
     trim: true,
   },
