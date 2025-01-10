@@ -26,6 +26,7 @@ import Forum from "./pages/common/Forum";
 import Home from "./pages/common/Home";
 import Test from "./pages/user/Test";
 import Chat from "./pages/user/Chat"
+import Plans from "./pages/user/Plans/Plans";
 // const LazyComponent = lazy(() => import('./pages/user/Test'));
 
 function App() {
@@ -37,6 +38,7 @@ function App() {
         <Routes>
           {/* Common Routes */}
           <Route path="/login" element={<Login />} />
+          <Route path="/plans" element={<Plans />} />
           <Route path="/register" element={<Register />} />
           <Route path="/" element={<Home />} />
           <Route path="/test" element={

@@ -1,4 +1,16 @@
 const Plan = require("../models/planModel");
+const express = require("express");
+const router = express.Router();
+
+router.get("/", async (req, res) => {
+  try {
+    const plans = await Plan.find({ status: true }); 
+    res.status(200).json(plans);
+  } catch (error) {
+    res.status(500).json({ message: "Error fetching plans", error });
+  }
+});
+
 
 const createPlan = async () => {
   try {
@@ -31,3 +43,6 @@ const createPlan = async () => {
 };
 
 // createPlan();
+
+
+module.exports = router;

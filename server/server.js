@@ -9,6 +9,7 @@ const path = require("path");
 const port = process.env.PORT || 5000;
 
 const usersRoute = require("./routes/usersRoute");
+const plansRoute = require("./routes/planRoute");
 const examsRoute = require("./routes/examsRoute");
 const resportsRoute = require("./routes/reportsRoute");
 const studyRoute = require("./routes/studyRoute");
@@ -53,6 +54,7 @@ app.use("/api/reports", resportsRoute);
 app.use("/api/study", studyRoute);
 app.use("/api/reviews", reviewsRoute);
 app.use("/api/forum", forumQuestionRoute);
+app.use("/api/plans", plansRoute);
 
 
 
