@@ -24,6 +24,16 @@ const userSchema = new mongoose.Schema(
       required: true,
       unique: true,
     },
+    phoneNumber: {
+      type: Number,
+      required: true,
+      unique: true,
+    },
+    paymentRequired:{
+      type:Boolean,
+      required: false,
+      default:true,
+    },
     profileImage: {
       type: String,
     },

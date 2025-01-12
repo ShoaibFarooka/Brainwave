@@ -16,12 +16,12 @@ const planSchema = new mongoose.Schema({
     required: true,
     min: 0,
   },
-  discuntedPrice: {
+  discountedPrice: {
     type: Number,
     required: true,
     min: 0,
   },
-  discuntPercentage: {
+  discountPercentage: {
     type: Number,
     required: true,
     min: 0,

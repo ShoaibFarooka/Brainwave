@@ -3,11 +3,15 @@ import { getPlans } from "../../../apicalls/plans";
 import "./Plans.css";
 import ConfirmModal from "./Components/ConfirmModal";
 import WaitingModal from "./Components/WaitingModal";
+import { addPayment, checkPaymentStatus } from "../../../apicalls/payment";
+import { useSelector } from "react-redux";
+import { getUserInfo } from "../../../apicalls/users";
 
 const Plans = () => {
     const [plans, setPlans] = useState([]);
     const [isModalOpen, setModalOpen] = useState(false);
     const [isWaitingModalOpen, setWaitingModalOpen] = useState(false);
+
 
     useEffect(() => {
         const fetchPlans = async () => {
@@ -29,9 +33,54 @@ const Plans = () => {
     };
 
 
-    const handlePaymentStart = () => {
-        setWaitingModalOpen(true);
+    const handlePaymentStart = async (plan) => {
+
+        try {
+            const userdata = await getUserInfo();
+
+            const transactionDetails = {
+                user: userdata.data, // Use user details
+                plan
+            };
+
+            const response = await addPayment(transactionDetails);
+
+            localStorage.setItem("order_id", response.order_id);
+
+        } catch (error) {
+            console.error("Error processing payment:", error);
+        } finally {
+            setWaitingModalOpen(true);
+        }
     };
+
+    const waitingForPayment = async () => {
+        try {
+            const orderId = localStorage.getItem("order_id");
+
+            if (!orderId) {
+                throw new Error("Order ID not found in local storage.");
+            }
+
+            console.log(orderId)
+
+            const payload = {
+                orderId: orderId
+            }
+
+            const data = await checkPaymentStatus(payload);
+
+            console.log("Payment Status:", data);
+
+        } catch (error) {
+            console.log("Error checking payment status:", error);
+        }
+    };
+
+    // useEffect(() => {
+    //     waitingForPayment()
+    // }, [])
+
 
     return (
         <div className="plans-container">
@@ -49,17 +98,17 @@ const Plans = () => {
                         Rs. {plan.actualPrice.toLocaleString()}
                     </p>
                     <p className="plan-discounted-price">
-                        Rs. {plan.discuntedPrice.toLocaleString()}
+                        Rs. {plan.discountedPrice.toLocaleString()}
                     </p>
                     <span className="plan-discount-tag">
-                        {plan.discuntPercentage}% OFF
+                        {plan.discountPercentage}% OFF
                     </span>
                     <p className="plan-renewal-info">
                         For {plan?.features[0]}
                     </p>
-                    <button className="plan-button" 
-                    // onClick={() => setModalOpen(true)}
-                    onClick={handlePaymentStart}
+                    <button className="plan-button"
+                        // onClick={() => setModalOpen(true)}
+                        onClick={() => handlePaymentStart(plan)}
                     >Choose Plan</button>
                     <ul className="plan-features">
                         {plan.features.map((feature, index) => (

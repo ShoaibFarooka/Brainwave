@@ -17,6 +17,7 @@ const reviewsRoute = require("./routes/reviewsRoute");
 const forumQuestionRoute = require("./routes/forumQuestionRoute");
 const chatgptRoute = require("./routes/chatRoute");
 const awsBucketRoute = require("./uploads/awsBucket");
+const paymentRoute =require("./routes/paymentRoute")
 
 //Express Middlewares 
 // app.use(cors({
@@ -55,6 +56,7 @@ app.use("/api/study", studyRoute);
 app.use("/api/reviews", reviewsRoute);
 app.use("/api/forum", forumQuestionRoute);
 app.use("/api/plans", plansRoute);
+app.use("/api/payment", paymentRoute);
 
 
 
