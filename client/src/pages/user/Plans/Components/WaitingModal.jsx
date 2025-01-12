@@ -27,7 +27,7 @@ const WaitingModal = ({ isOpen, onClose, timeoutDuration }) => {
     return (
         <Modal
             isOpen={isOpen}
-            onRequestClose={onClose}
+            // onRequestClose={onClose}
             className="waiting-modal-content"
             overlayClassName="waiting-modal-overlay"
         >

@@ -1,16 +1,16 @@
 import { createSlice } from "@reduxjs/toolkit";
 
-const paymentsSlice = createSlice({
-  name: "payments",
+const subscriptionDataSlice = createSlice({
+  name: "subscription",
   initialState: {
-    paymentStatus: "no payment",
+    subscriptionData: null,
   },
   reducers: {
-    SetPaymentStatus: (state, action) => {
-      state.paymentStatus = action.payload;
+    SetSubscriptionData: (state, action) => {
+      state.subscriptionData = action.payload;
     },
   },
 });
 
-export const { SetPaymentStatus } = paymentsSlice.actions;
-export default paymentsSlice.reducer;
+export const { SetSubscriptionData } = subscriptionDataSlice.actions;
+export default subscriptionDataSlice.reducer;

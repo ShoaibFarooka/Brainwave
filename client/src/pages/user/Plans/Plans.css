@@ -192,3 +192,85 @@
         padding: 8px 12px;
     }
 }
+
+
+  .subscription-details {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+    background-color: #f9fafb; /* Light gray background */
+    border: 1px solid #e5e7eb; /* Border with subtle contrast */
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Soft shadow for depth */
+    max-width: 400px;
+    margin: 20px auto;
+    text-align: center;
+  }
+  
+  .plan-title {
+    font-size: 1.8rem;
+    font-weight: bold;
+    color: #253864; /* Navy Blue */
+    margin-bottom: 15px;
+  }
+  
+  svg {
+    margin: 20px 0;
+  }
+  
+  .plan-description {
+    font-size: 1rem;
+    color: #4b5563; /* Neutral dark gray */
+    margin-bottom: 10px;
+  }
+  
+  .plan-dates {
+    font-size: 0.9rem;
+    color: #6b7280; /* Lighter gray for secondary information */
+    margin: 5px 0;
+  }
+  
+
+  .no-plan-required {
+    background-color: #f9f9f9; /* Light background to differentiate it from other content */
+    border-radius: 8px; /* Rounded corners for a soft, modern look */
+    padding: 20px;
+    margin: 20px 0;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Light shadow for depth */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+  }
+  
+  .no-plan-content {
+    max-width: 600px; /* Maximum width for better readability */
+  }
+  .no-plan-required h2 {
+    font-size: 1.8rem;
+    color: #2c3e50;
+    margin-bottom: 15px;
+    font-weight: bold;
+  }
+  
+  .no-plan-required p {
+    font-size: 1rem;
+    color: #34495e;
+    line-height: 1.6;
+  }
+  
+  /* Additional responsive styling */
+  @media (max-width: 768px) {
+    .no-plan-required {
+      padding: 15px;
+    }
+  
+    .no-plan-required h2 {
+      font-size: 1.6rem;
+    }
+  
+    .no-plan-required p {
+      font-size: 0.95rem;
+    }
+  }

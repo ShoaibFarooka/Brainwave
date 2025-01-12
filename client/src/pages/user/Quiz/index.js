@@ -7,7 +7,7 @@ import { HideLoading, ShowLoading } from "../../../redux/loaderSlice";
 import PageTitle from "../../../components/PageTitle";
 import { useNavigate } from "react-router-dom";
 import { checkPaymentStatus } from "../../../apicalls/payment";
-import { SetPaymentStatus } from "../../../redux/paymentSlice";
+import {  SetSubscriptionData } from "../../../redux/paymentSlice";
 
 function Quiz() {
   const [exams, setExams] = useState([]);
@@ -15,9 +15,8 @@ function Quiz() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const { user } = useSelector((state) => state.users);
-  const { paymentStatus } = useSelector((state) => state.payments);
+  const { subscriptionData } = useSelector((state) => state.subscription);
 
-  console.log(paymentStatus,"paymentStatus")
 
   const getExams = async () => {
     try {
@@ -35,28 +34,9 @@ function Quiz() {
     }
   };
 
-  const waitingForPayment = async () => {
-    try {
-      if (!user) {
-        throw new Error("User ID not found.");
-      }
-
-      const payload = {
-        userId: user._id,
-      };
-
-      const data = await checkPaymentStatus(payload);
-
-      dispatch(SetPaymentStatus(data.paymentStatus));
-
-    } catch (error) {
-      console.log("Error checking payment status:", error);
-    }
-  };
 
   useEffect(() => {
     getExams();
-    waitingForPayment();
   }, []);
 
   const verifyRetake = async (exam) => {

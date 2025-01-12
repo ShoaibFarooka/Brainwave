@@ -7,7 +7,8 @@ import { SetUser } from "../redux/usersSlice.js";
 import { useNavigate } from "react-router-dom";
 import { HideLoading, ShowLoading } from "../redux/loaderSlice";
 import { checkPaymentStatus } from "../apicalls/payment.js";
-import "./ProtectedRoute.css"
+import "./ProtectedRoute.css";
+import { SetSubscriptionData } from "../redux/paymentSlice.js";
 
 function ProtectedRoute({ children }) {
   const { user } = useSelector((state) => state.users);
@@ -18,7 +19,8 @@ function ProtectedRoute({ children }) {
   const navigate = useNavigate();
   const [isPaymentPending, setIsPaymentPending] = useState(false);
 
-    const { paymentStatus } = useSelector((state) => state.payments);
+  const { subscriptionData } = useSelector((state) => state.subscription);
+
   const userMenu = [
     {
       title: "Quiz",
@@ -128,6 +130,39 @@ function ProtectedRoute({ children }) {
     },
   ];
 
+  const waitingForPayment = async (user) => {
+    try {
+      if (!user) {
+        throw new Error("User ID not found.");
+      }
+
+      const payload = {
+        userId: user._id,
+      };
+
+      const data = await checkPaymentStatus(payload);
+
+      dispatch(SetSubscriptionData(data));
+
+      // if (user?.paymentRequired === true) {
+      //   if (data?.paymentStatus === "paid") {
+      //   } else {
+      //     if (activeRoute !== "/profile") {
+      //       navigate("/user/plans");
+      //       setIsPaymentPending(false);
+      //     }
+      //   }
+      // }
+
+      return data;
+
+      console.log("Payment Status:", data);
+    } catch (error) {
+      console.log("Error checking payment status:", error);
+      dispatch(SetSubscriptionData(null));
+    }
+  };
+
   const getUserData = async () => {
     try {
       const response = await getUserInfo();
@@ -137,6 +172,7 @@ function ProtectedRoute({ children }) {
           setMenu(adminMenu);
         } else {
           setMenu(userMenu);
+          // await waitingForPayment(response.data);
         }
       } else {
         message.error(response.message);
@@ -182,59 +218,59 @@ function ProtectedRoute({ children }) {
     return false;
   };
 
-  
-  useEffect(() => {
-    if (user?.paymentRequired === true && !user?.isAdmin) {
-      if (paymentStatus === "paid") {
+  const checkStatus = async () => {
+    
+      const data = await waitingForPayment(user);
+      if (data?.paymentStatus === "paid") {
       } else {
         if (activeRoute !== "/profile") {
           navigate("/user/plans");
           setIsPaymentPending(false);
         }
       }
-    }
-  }, [user, paymentStatus, navigate, activeRoute]);
-  
-
-  const getButtonClass = () => {
-    return isPaymentPending ? "button-disabled" : ""; // Apply class if payment is pending
+    
   };
-  
-
-  const waitingForPayment = async () => {
-    try {
-      if (!user) {
-        throw new Error("User ID not found.");
-      }
-
-      const payload = {
-        userId: user._id,
-      };
-
-      const data = await checkPaymentStatus(payload);
-
-      console.log("Payment Status:", data);
-    } catch (error) {
-      console.log("Error checking payment status:", error);
-    }
-  };
-
   useEffect(() => {
-    waitingForPayment();
-  }, []);
+    if (user?.paymentRequired && !user?.isAdmin) {
+      console.log(user, "hhhhh");
+  
+      if (subscriptionData?.paymentStatus === "pending") {
+        const checkPaymentStatusInterval = setInterval(() => {
+          checkStatus();
+        }, 15000);
+  
+        return () => clearInterval(checkPaymentStatusInterval);
+      } else {
+        checkStatus();
+      }
+    }
+  }, [user, navigate, activeRoute]); 
+  
+
+  const getButtonClass = (title) => {
+    // Exclude "Plans" and "Profile" buttons from the "button-disabled" class
+    if (title === "Plans" || title === "Profile") {
+      return ""; // No class applied
+    }
+  
+    return subscriptionData?.paymentStatus !== "paid" || user?.paymentRequired
+      ? "button-disabled"
+      : "";
+  };
+  
 
   return (
     <div className="layout">
       <div className="flex gap-1 w-full h-full h-100">
-        <div className={`sidebar ${isMobile && "mobile-sidebar"}`}>
+        <div className={`sidebar ${isMobile ? "mobile-sidebar" : ""}`}>
           <div className="menu">
             {menu.map((item, index) => {
               return (
                 <div
                   className={`menu-item ${
-                    getIsActiveOrNot(item.paths) && "active-menu-item"
+                    getIsActiveOrNot(item.paths) ? "active-menu-item" : ""
                   }
-                  ${getButtonClass()}
+                  ${getButtonClass(item.title)}
                   `}
                   key={index}
                   onClick={item.onClick}

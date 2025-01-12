@@ -131,9 +131,10 @@ router.get("/check-payment-status/:userId", async (req, res) => {
     }
 
     return res.status(200).json({
-      paymentStatus: lastPayment.paymentStatus,
-      paymentDate: lastPayment.paymentDate,
+      paymentStatus: subscription.paymentStatus,
       amount: lastPayment.amount,
+      startDate:subscription.startDate,
+      endDate:subscription.endDate,
       plan: subscription.activePlan || "No active plan found", // Handle no active plan
     });
   } catch (error) {
