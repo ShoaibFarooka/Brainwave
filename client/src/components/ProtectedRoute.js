@@ -1,11 +1,13 @@
 import { message } from "antd";
 import React, { useEffect, useState } from "react";
-import Flag from '../assets/tanzania-flag.png';
+import Flag from "../assets/tanzania-flag.png";
 import { getUserInfo } from "../apicalls/users";
 import { useDispatch, useSelector } from "react-redux";
 import { SetUser } from "../redux/usersSlice.js";
 import { useNavigate } from "react-router-dom";
 import { HideLoading, ShowLoading } from "../redux/loaderSlice";
+import { checkPaymentStatus } from "../apicalls/payment.js";
+import "./ProtectedRoute.css"
 
 function ProtectedRoute({ children }) {
   const { user } = useSelector((state) => state.users);
@@ -14,6 +16,9 @@ function ProtectedRoute({ children }) {
   const [isMobile, setIsMobile] = useState(false);
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const [isPaymentPending, setIsPaymentPending] = useState(false);
+
+    const { paymentStatus } = useSelector((state) => state.payments);
   const userMenu = [
     {
       title: "Quiz",
@@ -82,7 +87,6 @@ function ProtectedRoute({ children }) {
   ];
 
   const adminMenu = [
-
     {
       title: "Users",
       paths: ["/admin/users", "/admin/users/add"],
@@ -178,16 +182,58 @@ function ProtectedRoute({ children }) {
     return false;
   };
 
+  console.log(user,"user122")
+
+  useEffect(() => {
+    if (user?.paymentRequired === true && !user?.isAdmin) {
+      if (paymentStatus === "paid") {
+      } else {
+        navigate("/user/plans");
+        setIsPaymentPending(false);
+      }
+    }
+  }, [user, paymentStatus, navigate]);
+
+  const getButtonClass = () => {
+    return isPaymentPending ? "button-disabled" : ""; // Apply class if payment is pending
+  };
+  
+
+  const waitingForPayment = async () => {
+    try {
+      if (!user) {
+        throw new Error("User ID not found.");
+      }
+
+      const payload = {
+        userId: user._id,
+      };
+
+      const data = await checkPaymentStatus(payload);
+
+      console.log("Payment Status:", data);
+    } catch (error) {
+      console.log("Error checking payment status:", error);
+    }
+  };
+
+  useEffect(() => {
+    waitingForPayment();
+  }, []);
+
   return (
     <div className="layout">
       <div className="flex gap-1 w-full h-full h-100">
-        <div className={`sidebar ${isMobile && 'mobile-sidebar'}`}>
+        <div className={`sidebar ${isMobile && "mobile-sidebar"}`}>
           <div className="menu">
             {menu.map((item, index) => {
               return (
                 <div
-                  className={`menu-item ${getIsActiveOrNot(item.paths) && "active-menu-item"
-                    }`}
+                  className={`menu-item ${
+                    getIsActiveOrNot(item.paths) && "active-menu-item"
+                  }
+                  ${getButtonClass()}
+                  `}
                   key={index}
                   onClick={item.onClick}
                 >
@@ -198,7 +244,15 @@ function ProtectedRoute({ children }) {
             })}
           </div>
         </div>
-        <div className={`body flex flex-col h-screen ${collapsed ? isMobile ? 'mobile-collapsed-body' : 'collapsed-body' : 'no-collapse-body'}`}>
+        <div
+          className={`body flex flex-col h-screen ${
+            collapsed
+              ? isMobile
+                ? "mobile-collapsed-body"
+                : "collapsed-body"
+              : "no-collapse-body"
+          }`}
+        >
           <div className="header flex justify-between">
             {!collapsed && (
               <i
@@ -206,23 +260,35 @@ function ProtectedRoute({ children }) {
                 onClick={() => setCollapsed(true)}
               ></i>
             )}
-            {(collapsed && !isMobile) && (
+            {collapsed && !isMobile && (
               <i
                 className="ri-menu-line"
                 onClick={() => setCollapsed(false)}
               ></i>
             )}
             <div className="flex items-center gap-1">
-              <div className={`text-white ${isMobile ? 'text-xs' : 'text-2xl'}`}>BRAINWAVE</div>
-              <img src={Flag} alt="tanzania-flag" style={{ width: '30px', height: '30px' }} />
+              <div
+                className={`text-white ${isMobile ? "text-xs" : "text-2xl"}`}
+              >
+                BRAINWAVE
+              </div>
+              <img
+                src={Flag}
+                alt="tanzania-flag"
+                style={{ width: "30px", height: "30px" }}
+              />
             </div>
             <div>
               <div className="flex gap-1 items-center">
-                <h1 className={`text-white ${isMobile ? 'text-xs' : 'text-md'}`}>{user?.name}</h1>
+                <h1
+                  className={`text-white ${isMobile ? "text-xs" : "text-md"}`}
+                >
+                  {user?.name}
+                </h1>
               </div>
-              {!isMobile &&
+              {!isMobile && (
                 <span>Role : {user?.isAdmin ? "Admin" : "User"}</span>
-              }
+              )}
             </div>
           </div>
           <div className="content">{children}</div>

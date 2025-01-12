@@ -4,13 +4,15 @@ import "./Plans.css";
 import ConfirmModal from "./Components/ConfirmModal";
 import WaitingModal from "./Components/WaitingModal";
 import { addPayment, checkPaymentStatus } from "../../../apicalls/payment";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { getUserInfo } from "../../../apicalls/users";
 
 const Plans = () => {
+    const { user } = useSelector((state) => state.users);
     const [plans, setPlans] = useState([]);
     const [isModalOpen, setModalOpen] = useState(false);
     const [isWaitingModalOpen, setWaitingModalOpen] = useState(false);
+    const { paymentStatus } = useSelector((state) => state.payments);
 
 
     useEffect(() => {
@@ -39,7 +41,7 @@ const Plans = () => {
             const userdata = await getUserInfo();
 
             const transactionDetails = {
-                user: userdata.data, // Use user details
+                user: userdata.data, 
                 plan
             };
 
@@ -54,32 +56,16 @@ const Plans = () => {
         }
     };
 
-    const waitingForPayment = async () => {
-        try {
-            const orderId = localStorage.getItem("order_id");
 
-            if (!orderId) {
-                throw new Error("Order ID not found in local storage.");
-            }
-
-            console.log(orderId)
-
-            const payload = {
-                orderId: orderId
-            }
-
-            const data = await checkPaymentStatus(payload);
-
-            console.log("Payment Status:", data);
-
-        } catch (error) {
-            console.log("Error checking payment status:", error);
-        }
-    };
-
-    // useEffect(() => {
-    //     waitingForPayment()
-    // }, [])
+    useEffect(() => {
+        const checkPaymentStatusInterval = setInterval(() => {
+          if (user?.paymentRequired === true && paymentStatus === "pending") {
+            setWaitingModalOpen(true); 
+          }
+        }, 15000);
+    
+        return () => clearInterval(checkPaymentStatusInterval);
+      }, [user, paymentStatus]);
 
 
     return (

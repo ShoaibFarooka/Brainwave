@@ -10,9 +10,9 @@ export const addPayment = async (payload) => {
 };
 
 
-export const checkPaymentStatus = async (payload) => {
+export const checkPaymentStatus = async ({userId}) => {
   try {
-    const response = await axiosInstance.get("/api/payment/check-payment-status", payload);
+    const response = await axiosInstance.get(`/api/payment/check-payment-status/`+userId,);
     return response.data;
   } catch (error) {
     return error.response.data;

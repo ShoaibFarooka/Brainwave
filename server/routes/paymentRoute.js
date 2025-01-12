@@ -108,41 +108,40 @@ router.post("/", async (req, res) => {
   }
 });
 
-router.get("/check-payment-status", async (req, res) => {
-  const { orderId } = req.query; // Get orderId from the query parameters
+router.get("/check-payment-status/:userId", async (req, res) => {
+  const { userId } = req.params;  
+
+  console.log(userId,"userdata")
 
   try {
-    // if (!orderId) {
-    //   return res.status(400).json({ error: 'Order ID is required' });
-    // }
+    if (!userId) {
+      return res.status(400).json({ error: "User ID is required" });
+    }
 
-    const subscription = await Subscription.findOne({
-      "paymentHistory.orderId": orderId,
-    });
+    const subscription = await Subscription.findOne({ user: userId }).populate("activePlan");
 
     if (!subscription) {
       return res.status(404).json({ error: "Subscription not found" });
     }
 
-    const paymentHistory = subscription.paymentHistory.find(
-      (history) => history.orderId === orderId
-    );
+    const lastPayment = subscription.paymentHistory.slice(-1)[0];
 
-    if (!paymentHistory) {
-      return res.status(404).json({ error: "Payment history not found" });
+    if (!lastPayment) {
+      return res.status(404).json({ error: "No payment history found" });
     }
 
     return res.status(200).json({
-      paymentStatus: paymentHistory.paymentStatus,
-      paymentDate: paymentHistory.paymentDate,
-      amount: paymentHistory.amount,
-      plan: subscription.activePlan,
+      paymentStatus: lastPayment.paymentStatus,
+      paymentDate: lastPayment.paymentDate,
+      amount: lastPayment.amount,
+      plan: subscription.activePlan || "No active plan found", // Handle no active plan
     });
   } catch (error) {
     console.error("Error fetching payment status:", error);
     return res.status(500).json({ error: "Internal Server Error" });
   }
 });
+
 
 // Webhook handler for payment updates
 router.post("/webhook", async (req, res) => {

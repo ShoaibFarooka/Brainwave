@@ -36,7 +36,30 @@ function Login() {
       dispatch(HideLoading());
       message.error(error.message);
     }
-  };
+  }; useEffect(() => {
+    const waitingForPayment = async () => {
+        try {
+
+            if (!user) {
+                throw new Error("User ID not found.");
+            }
+
+            const payload = {
+                userId: user._id
+            }
+
+            const data = await checkPaymentStatus(payload);
+
+            console.log("Payment Status:", data.paymentStatus);
+
+
+        } catch (error) {
+            console.log("Error checking payment status:", error);
+        }
+    };    
+
+    waitingForPayment();
+}, []);
 
   return (
     <div className="flex justify-center items-center h-screen w-screen bg-primary">

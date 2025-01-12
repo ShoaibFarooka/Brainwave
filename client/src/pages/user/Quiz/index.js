@@ -6,6 +6,8 @@ import { getAllReportsByUser } from "../../../apicalls/reports";
 import { HideLoading, ShowLoading } from "../../../redux/loaderSlice";
 import PageTitle from "../../../components/PageTitle";
 import { useNavigate } from "react-router-dom";
+import { checkPaymentStatus } from "../../../apicalls/payment";
+import { SetPaymentStatus } from "../../../redux/paymentSlice";
 
 function Quiz() {
   const [exams, setExams] = useState([]);
@@ -13,6 +15,9 @@ function Quiz() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const { user } = useSelector((state) => state.users);
+  const { paymentStatus } = useSelector((state) => state.payments);
+
+  console.log(paymentStatus,"paymentStatus")
 
   const getExams = async () => {
     try {
@@ -30,23 +35,45 @@ function Quiz() {
     }
   };
 
+  const waitingForPayment = async () => {
+    try {
+      if (!user) {
+        throw new Error("User ID not found.");
+      }
+
+      const payload = {
+        userId: user._id,
+      };
+
+      const data = await checkPaymentStatus(payload);
+
+      dispatch(SetPaymentStatus(data.paymentStatus));
+
+    } catch (error) {
+      console.log("Error checking payment status:", error);
+    }
+  };
+
   useEffect(() => {
     getExams();
+    waitingForPayment();
   }, []);
 
   const verifyRetake = async (exam) => {
     try {
       dispatch(ShowLoading());
       const response = await getAllReportsByUser();
-      const retakeCount = response.data.filter(item => item.exam && item.exam._id === exam._id).length;
+      const retakeCount = response.data.filter(
+        (item) => item.exam && item.exam._id === exam._id
+      ).length;
       console.log(retakeCount);
       if (retakeCount >= 20) {
-        message.error('Max attempts reached');
+        message.error("Max attempts reached");
         dispatch(HideLoading());
         return;
       }
     } catch (error) {
-      message.error('Unable to verify retake');
+      message.error("Unable to verify retake");
       dispatch(HideLoading());
       return;
     }
@@ -58,12 +85,13 @@ function Quiz() {
   const handleSearch = (e) => {
     setSearchQuery(e.target.value);
   };
-// Filter exams based on search query
-const filteredExams = exams.filter((exam) =>
-  (exam.name?.toLowerCase().includes(searchQuery.toLowerCase().trim()) ||
-  exam.category?.toLowerCase().includes(searchQuery.toLowerCase().trim()) ||
-  exam.class?.toLowerCase().includes(searchQuery.toLowerCase().trim()))
-);
+  // Filter exams based on search query
+  const filteredExams = exams.filter(
+    (exam) =>
+      exam.name?.toLowerCase().includes(searchQuery.toLowerCase().trim()) ||
+      exam.category?.toLowerCase().includes(searchQuery.toLowerCase().trim()) ||
+      exam.class?.toLowerCase().includes(searchQuery.toLowerCase().trim())
+  );
 
   // Check if the length of filtered exams is less than total exams
   const shouldRenderFilteredExams = filteredExams.length < exams.length;
@@ -86,7 +114,7 @@ const filteredExams = exams.filter((exam) =>
             <span>{`Filtered ${filteredExams.length} out of ${exams.length}`}</span>
           </div>
         )}
-        
+
         <Row gutter={[16, 16]}>
           {/* Render filtered exams only if there are fewer filtered exams than total exams */}
           {filteredExams.map((exam, index) => (
@@ -99,9 +127,7 @@ const filteredExams = exams.filter((exam) =>
                 <h1 className="text-md">Subject : {exam.category}</h1>
                 <h1 className="text-md">Class : {exam.class}</h1>
                 <h1 className="text-md">Total Marks : {exam.totalMarks}</h1>
-                <h1 className="text-md">
-                  Passing Marks : {exam.passingMarks}
-                </h1>
+                <h1 className="text-md">Passing Marks : {exam.passingMarks}</h1>
                 <h1 className="text-md">Duration : {exam.duration}</h1>
                 <button
                   className="primary-outlined-btn"
