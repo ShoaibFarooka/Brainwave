@@ -11,9 +11,10 @@ import { SetSubscriptionData } from "../../../redux/paymentSlice";
 const Plans = () => {
     const { user } = useSelector((state) => state.users);
     const [plans, setPlans] = useState([]);
-    const [isModalOpen, setModalOpen] = useState(false);
+    const [isConfirmModalOpen, setConfirmModalOpen] = useState(false);
     const [isWaitingModalOpen, setWaitingModalOpen] = useState(false);
     const { subscriptionData } = useSelector((state) => state.subscription);
+    const [paymentInProgress,setPaymentInProgress]=useState(false)
     const dispatch = useDispatch()
 
     useEffect(() => {
@@ -49,19 +50,21 @@ const Plans = () => {
             const response = await addPayment(transactionDetails);
 
             localStorage.setItem("order_id", response.order_id);
+            setWaitingModalOpen(true);
 
         } catch (error) {
             console.error("Error processing payment:", error);
-        } finally {
-            setWaitingModalOpen(true);
-        }
+        } 
     };
 
 
     useEffect(() => {
         if (user?.paymentRequired === true && subscriptionData?.paymentStatus === "pending") {
             setWaitingModalOpen(true);
+            setPaymentInProgress(true)
             // dispatch(SetSubscriptionData({ paymentStatus: "refetch" }))
+        } else if(user?.paymentRequired === true && subscriptionData?.paymentStatus === "paid" && paymentInProgress){
+            setConfirmModalOpen(true) 
         }
     }, [user, subscriptionData]);
 
@@ -71,11 +74,11 @@ const Plans = () => {
     return (
         <div>
             {!user?.paymentRequired ? <div class="no-plan-required">
-  <div class="no-plan-content">
-    <h2>No Plan Required</h2>
-    <p>You don't need to buy any plan to access the system. Enjoy all the features with no additional cost!</p>
-  </div>
-</div> : subscriptionData?.paymentStatus !== "paid" ? <div className="plans-container">
+                <div class="no-plan-content">
+                    <h2>No Plan Required</h2>
+                    <p>You don't need to buy any plan to access the system. Enjoy all the features with no additional cost!</p>
+                </div>
+            </div> : subscriptionData?.paymentStatus !== "paid" ? <div className="plans-container">
                 {plans.map((plan) => (
                     <div
                         key={plan._id}
@@ -99,7 +102,7 @@ const Plans = () => {
                             For {plan?.features[0]}
                         </p>
                         <button className="plan-button"
-                            // onClick={() => setModalOpen(true)}
+                            // onClick={() => setConfirmModalOpen(true)}
                             onClick={() => handlePaymentStart(plan)}
                         >Choose Plan</button>
                         <ul className="plan-features">
@@ -150,8 +153,8 @@ const Plans = () => {
             />
 
             <ConfirmModal
-                isOpen={isModalOpen}
-                onClose={() => setModalOpen(false)}
+                isOpen={isConfirmModalOpen}
+                onClose={() => setConfirmModalOpen(false)}
                 transaction={transactionDetails}
             />
         </div>
