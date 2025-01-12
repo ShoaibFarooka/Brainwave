@@ -53,6 +53,12 @@ function ProtectedRoute({ children }) {
       onClick: () => navigate("/user/chat"),
     },
     {
+      title: "Plans",
+      paths: ["/user/plans"],
+      icon: <i className="ri-calendar-check-line"></i>,
+      onClick: () => navigate("/user/plans"),
+    },
+    {
       title: "Forum",
       paths: ["/forum"],
       icon: <i className="ri-discuss-line"></i>,

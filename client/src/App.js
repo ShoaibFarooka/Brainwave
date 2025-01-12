@@ -38,7 +38,6 @@ function App() {
         <Routes>
           {/* Common Routes */}
           <Route path="/login" element={<Login />} />
-          <Route path="/plans" element={<Plans />} />
           <Route path="/register" element={<Register />} />
           <Route path="/" element={<Home />} />
           <Route path="/test" element={
@@ -70,6 +69,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <Chat />
+              </ProtectedRoute>
+            }
+          />
+           <Route
+            path="/user/plans"
+            element={
+              <ProtectedRoute>
+                <Plans />
               </ProtectedRoute>
             }
           />
