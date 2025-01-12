@@ -224,7 +224,7 @@ router.post("/get-user-info", authMiddleware, async (req, res) => {
 // update user info
 
 router.post("/update-user-info", authMiddleware, async (req, res) => {
-  const { name, email, school, class_, userId, schoolType } = req.body;
+  const { name, email, school, class_, userId, schoolType,phoneNumber } = req.body;
   try {
     const updatedUser = await User.findByIdAndUpdate(
       userId,
@@ -234,6 +234,7 @@ router.post("/update-user-info", authMiddleware, async (req, res) => {
         school,
         class: class_,
         schoolType,
+        phoneNumber,
       },
       { new: true }
     );

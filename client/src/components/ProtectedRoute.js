@@ -182,17 +182,19 @@ function ProtectedRoute({ children }) {
     return false;
   };
 
-  console.log(user,"user122")
-
+  
   useEffect(() => {
     if (user?.paymentRequired === true && !user?.isAdmin) {
       if (paymentStatus === "paid") {
       } else {
-        navigate("/user/plans");
-        setIsPaymentPending(false);
+        if (activeRoute !== "/profile") {
+          navigate("/user/plans");
+          setIsPaymentPending(false);
+        }
       }
     }
-  }, [user, paymentStatus, navigate]);
+  }, [user, paymentStatus, navigate, activeRoute]);
+  
 
   const getButtonClass = () => {
     return isPaymentPending ? "button-disabled" : ""; // Apply class if payment is pending

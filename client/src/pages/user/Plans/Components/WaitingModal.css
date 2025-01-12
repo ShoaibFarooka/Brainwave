@@ -21,6 +21,8 @@
     width: 100%;
     text-align: center;
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+    overflow: none;
+    border: none;
 }
 
 /* Modal Header */
