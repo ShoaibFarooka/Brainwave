@@ -60,11 +60,16 @@ function generateOTP() {
 router.post("/register", async (req, res) => {
   try {
     // check if user already exists
-    const userExists = await User.findOne({ email: req.body.email });
+    const userExists = await User.findOne({
+      $or: [
+        { email: req.body.email },
+        { phoneNumber: req.body.phoneNumber }
+      ]
+    });
     if (userExists) {
       return res
-        .status(200)
-        .send({ message: "User already exists", success: false });
+        .status(409)
+        .send({ message: "User already exists with this email or number", success: false });
     }
 
     // hash password
@@ -73,7 +78,7 @@ router.post("/register", async (req, res) => {
     req.body.password = hashedPassword;
 
     // create new user
-    const newUser = new User(req.body);
+    const newUser = new User({ ...req.body, paymentRequired: true });
     await newUser.save();
     res.send({
       message: "User created successfully",
@@ -93,6 +98,21 @@ router.post("/register", async (req, res) => {
 router.post("/otp", async (req, res) => {
   try {
     const email = req.body.email;
+    const phoneNumber = req.body.phoneNumber;
+
+    // check if user already exists
+    const userExists = await User.findOne({
+      $or: [
+        { email },
+        { phoneNumber }
+      ]
+    });
+    if (userExists) {
+      return res
+        .status(409)
+        .send({ message: "User already exists with this email or number", success: false });
+    }
+
     const randomOTP = generateOTP();
     const mailOptions = {
       from: process.env.SENDER_EMAIL,
@@ -206,7 +226,7 @@ router.get("/get-all-users", async (req, res) => {
 
 router.post("/get-user-info", authMiddleware, async (req, res) => {
   try {
-    const user = await User.findById(req.body.userId);
+    const user = await User.findById(req.body.userId).select("-password -createdAt -updatedAt -__v");
     res.send({
       message: "User info fetched successfully",
       success: true,
@@ -224,7 +244,7 @@ router.post("/get-user-info", authMiddleware, async (req, res) => {
 // update user info
 
 router.post("/update-user-info", authMiddleware, async (req, res) => {
-  const { name, email, school, class_, userId, schoolType,phoneNumber } = req.body;
+  const { name, email, school, class_, userId, schoolType, phoneNumber } = req.body;
   try {
     const updatedUser = await User.findByIdAndUpdate(
       userId,
@@ -366,7 +386,7 @@ router.patch("/block-user", async (req, res) => {
 
 // delete user
 router.delete("/delete-user", async (req, res) => {
-  const session = await mongoose.startSession(); 
+  const session = await mongoose.startSession();
   session.startTransaction();
 
   try {

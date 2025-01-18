@@ -66,7 +66,6 @@ const Profile = () => {
       const response = await getUserInfo();
       if (response.success) {
         setUserDetails(response.data);
-        console.log(response, "qqqqqqqqqq");
         setFormData({
           ...formData,
           name: response.data.name,
@@ -226,10 +225,6 @@ const handleChange = (e) => {
       message.error("Invalid OTP");
     }
   };
-
-  console.log("Det...", formData);
-
-  console.log(profileImage, "profileImage");
 
   return (
     <div className="Profile">

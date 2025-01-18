@@ -64,7 +64,7 @@ function Register() {
   };
 
   return (
-    <div className="flex justify-center items-center w-screen bg-primary main">
+    <div className="flex justify-center items-center bg-primary main">
       <div className="card p-3 bg-white">
         {verification ? (
           <div>
@@ -157,6 +157,7 @@ function Register() {
                     message: "Phone number must be exactly 10 digits!",
                   },
                 ]}
+                extra="This phone number will be used for the payment process."
               >
                 <input type="text" maxLength="10" />
               </Form.Item>

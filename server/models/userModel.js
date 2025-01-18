@@ -12,8 +12,8 @@ const userSchema = new mongoose.Schema(
     schoolType: {
       type: String,
       enum: ["primary", "secondary"],
-      default: "primary", 
-      required: false,   
+      default: "primary",
+      required: false,
     },
     class: {
       type: String,
@@ -25,14 +25,14 @@ const userSchema = new mongoose.Schema(
       unique: true,
     },
     phoneNumber: {
-      type: Number,
+      type: String,
       required: true,
       unique: true,
     },
-    paymentRequired:{
-      type:Boolean,
+    paymentRequired: {
+      type: Boolean,
       required: false,
-      default:true,
+      default: false,
     },
     profileImage: {
       type: String,

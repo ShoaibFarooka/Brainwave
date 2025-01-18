@@ -1,25 +1,29 @@
 import { message } from "antd";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import Flag from "../assets/tanzania-flag.png";
 import { getUserInfo } from "../apicalls/users";
 import { useDispatch, useSelector } from "react-redux";
 import { SetUser } from "../redux/usersSlice.js";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { HideLoading, ShowLoading } from "../redux/loaderSlice";
 import { checkPaymentStatus } from "../apicalls/payment.js";
 import "./ProtectedRoute.css";
-import { SetSubscriptionData } from "../redux/paymentSlice.js";
+import { SetSubscription } from "../redux/subscriptionSlice.js";
+import { setPaymentVerificationNeeded } from "../redux/paymentSlice.js";
 
 function ProtectedRoute({ children }) {
-  const { user } = useSelector((state) => state.users);
+  const { user } = useSelector((state) => state.user);
   const [menu, setMenu] = useState([]);
   const [collapsed, setCollapsed] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [isPaymentPending, setIsPaymentPending] = useState(false);
+  const intervalRef = useRef(null);
+  const { subscriptionData } = useSelector((state) => state.subscription);
+  const { paymentVerificationNeeded } = useSelector((state) => state.payment);
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const [isPaymentPending, setIsPaymentPending] = useState(false);
-
-  const { subscriptionData } = useSelector((state) => state.subscription);
+  const location = useLocation();
+  const activeRoute = location.pathname;
 
   const userMenu = [
     {
@@ -130,39 +134,6 @@ function ProtectedRoute({ children }) {
     },
   ];
 
-  const waitingForPayment = async (user) => {
-    try {
-      if (!user) {
-        throw new Error("User ID not found.");
-      }
-
-      const payload = {
-        userId: user._id,
-      };
-
-      const data = await checkPaymentStatus(payload);
-
-      dispatch(SetSubscriptionData(data));
-
-      // if (user?.paymentRequired === true) {
-      //   if (data?.paymentStatus === "paid") {
-      //   } else {
-      //     if (activeRoute !== "/profile") {
-      //       navigate("/user/plans");
-      //       setIsPaymentPending(false);
-      //     }
-      //   }
-      // }
-
-      return data;
-
-      console.log("Payment Status:", data);
-    } catch (error) {
-      console.log("Error checking payment status:", error);
-      dispatch(SetSubscriptionData(null));
-    }
-  };
-
   const getUserData = async () => {
     try {
       const response = await getUserInfo();
@@ -172,7 +143,6 @@ function ProtectedRoute({ children }) {
           setMenu(adminMenu);
         } else {
           setMenu(userMenu);
-          // await waitingForPayment(response.data);
         }
       } else {
         message.error(response.message);
@@ -185,18 +155,32 @@ function ProtectedRoute({ children }) {
   };
 
   useEffect(() => {
+    // Function to handle resizing
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+      setCollapsed(window.innerWidth < 768);
+    };
+
+    // Add resize event listener
+    window.addEventListener("resize", handleResize);
+
     if (window.innerWidth < 768) {
       setIsMobile(true);
       setCollapsed(true);
     }
+
+    // Check for token and navigate
     if (localStorage.getItem("token")) {
       getUserData();
     } else {
       navigate("/login");
     }
-  }, []);
 
-  const activeRoute = window.location.pathname;
+    // Cleanup the event listener when the component is unmounted
+    return () => {
+      window.removeEventListener("resize", handleResize);
+    };
+  }, []);
 
   const getIsActiveOrNot = (paths) => {
     if (paths.includes(activeRoute)) {
@@ -218,119 +202,139 @@ function ProtectedRoute({ children }) {
     return false;
   };
 
-  const checkStatus = async () => {
-    
-      const data = await waitingForPayment(user);
-      if (data?.paymentStatus === "paid") {
-      } else {
-        if (activeRoute !== "/profile") {
-          navigate("/user/plans");
-          setIsPaymentPending(false);
+  useEffect(() => {
+    if (isPaymentPending && !['/plans', '/profile'].includes(activeRoute)) {
+      navigate('/user/plans');
+    }
+  }, [isPaymentPending, activeRoute, navigate]);
+
+  const verifyPaymentStatus = async () => {
+    try {
+      const data = await checkPaymentStatus();
+      console.log("Payment Status:", data);
+      if (data?.error || data?.paymentStatus !== 'paid') {
+        if (subscriptionData !== null) {
+          dispatch(SetSubscription(null));
+        }
+        setIsPaymentPending(true);
+      }
+      else {
+        setIsPaymentPending(false);
+        dispatch(SetSubscription(data));
+        if (intervalRef.current) {
+          clearInterval(intervalRef.current);
         }
       }
-    
+    } catch (error) {
+      console.log("Error checking payment status:", error);
+      dispatch(SetSubscription(null));
+      setIsPaymentPending(true);
+    }
   };
+
   useEffect(() => {
     if (user?.paymentRequired && !user?.isAdmin) {
-      console.log(user, "hhhhh");
-  
-      if (subscriptionData?.paymentStatus === "pending") {
-        const checkPaymentStatusInterval = setInterval(() => {
-          checkStatus();
+      console.log("Effect Runing 2222222...");
+
+      if (paymentVerificationNeeded) {
+        console.log('Inside timer in effect 2....');
+        intervalRef.current = setInterval(() => {
+          console.log('Timer in action...');
+          verifyPaymentStatus();
         }, 15000);
-  
-        return () => clearInterval(checkPaymentStatusInterval);
-      } else {
-        checkStatus();
+        dispatch(setPaymentVerificationNeeded(false));
       }
     }
-  }, [user, navigate, activeRoute]); 
-  
+  }, [paymentVerificationNeeded]);
+
+  useEffect(() => {
+    if (user?.paymentRequired && !user?.isAdmin) {
+      console.log("Effect Runing...");
+      verifyPaymentStatus();
+    }
+  }, [user, activeRoute]);
+
 
   const getButtonClass = (title) => {
     // Exclude "Plans" and "Profile" buttons from the "button-disabled" class
-    if (title === "Plans" || title === "Profile") {
+    if (!user.paymentRequired || title === "Plans" || title === "Profile" || title === "Logout") {
       return ""; // No class applied
     }
-  
-    return subscriptionData?.paymentStatus !== "paid" || user?.paymentRequired
+
+    return subscriptionData?.paymentStatus !== "paid" && user?.paymentRequired
       ? "button-disabled"
       : "";
   };
-  
+
 
   return (
-    <div className="layout">
-      <div className="flex gap-1 w-full h-full h-100">
-        <div className={`sidebar ${isMobile ? "mobile-sidebar" : ""}`}>
-          <div className="menu">
-            {menu.map((item, index) => {
-              return (
-                <div
-                  className={`menu-item ${
-                    getIsActiveOrNot(item.paths) ? "active-menu-item" : ""
+    <div className="layout flex gap-1 h-100">
+      <div className={`sidebar ${isMobile ? "mobile-sidebar" : ""}`}>
+        <div className="menu">
+          {menu.map((item, index) => {
+            return (
+              <div
+                className={`menu-item ${getIsActiveOrNot(item.paths) ? "active-menu-item" : ""
                   }
                   ${getButtonClass(item.title)}
                   `}
-                  key={index}
-                  onClick={item.onClick}
-                >
-                  {item.icon}
-                  {!collapsed && <span>{item.title}</span>}
-                </div>
-              );
-            })}
-          </div>
-        </div>
-        <div
-          className={`body flex flex-col h-screen ${
-            collapsed
-              ? isMobile
-                ? "mobile-collapsed-body"
-                : "collapsed-body"
-              : "no-collapse-body"
-          }`}
-        >
-          <div className="header flex justify-between">
-            {!collapsed && (
-              <i
-                className="ri-close-line"
-                onClick={() => setCollapsed(true)}
-              ></i>
-            )}
-            {collapsed && !isMobile && (
-              <i
-                className="ri-menu-line"
-                onClick={() => setCollapsed(false)}
-              ></i>
-            )}
-            <div className="flex items-center gap-1">
-              <div
-                className={`text-white ${isMobile ? "text-xs" : "text-2xl"}`}
+                key={index}
+                onClick={item.onClick}
               >
-                BRAINWAVE
+                {item.icon}
+                {!collapsed && <span>{item.title}</span>}
               </div>
-              <img
-                src={Flag}
-                alt="tanzania-flag"
-                style={{ width: "30px", height: "30px" }}
-              />
-            </div>
-            <div>
-              <div className="flex gap-1 items-center">
-                <h1
-                  className={`text-white ${isMobile ? "text-xs" : "text-md"}`}
-                >
-                  {user?.name}
-                </h1>
-              </div>
-              {!isMobile && (
-                <span>Role : {user?.isAdmin ? "Admin" : "User"}</span>
-              )}
-            </div>
-          </div>
-          <div className="content">{children}</div>
+            );
+          })}
         </div>
+      </div>
+      <div
+        className={`body flex flex-col h-screen ${collapsed
+          ? isMobile
+            ? "mobile-collapsed-body"
+            : "collapsed-body"
+          : "no-collapse-body"
+          }`}
+      >
+        <div className="header flex justify-between">
+          {!collapsed && (
+            <i
+              className="ri-close-line"
+              onClick={() => setCollapsed(true)}
+            ></i>
+          )}
+          {collapsed && !isMobile && (
+            <i
+              className="ri-menu-line"
+              onClick={() => setCollapsed(false)}
+            ></i>
+          )}
+          <div className="flex items-center gap-1">
+            <div
+              className={`text-white ${isMobile ? "text-xs" : "text-2xl"}`}
+            >
+              BRAINWAVE
+            </div>
+            <img
+              src={Flag}
+              alt="tanzania-flag"
+              style={{ width: "30px", height: "30px" }}
+            />
+          </div>
+          <div>
+            <div className="flex gap-1 items-center">
+              <h1
+                className={`text-white ${isMobile ? "text-xs" : "text-md"}`}
+              >
+                {user?.name}
+              </h1>
+            </div>
+            {!isMobile && (
+              <span>Role : {user?.isAdmin ? "Admin" : "User"}</span>
+            )}
+          </div>
+        </div>
+        <div className="content">{children}</div>
       </div>
     </div>
   );

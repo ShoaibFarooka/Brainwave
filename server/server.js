@@ -38,8 +38,13 @@ morgan.format('short', (tokens, req, res) => {
 });
 app.use(morgan('short'))
 app.use('/uploads', express.static(path.join(__dirname, 'Photos')));
-app.use(express.json({ limit: "110mb" })); // Adjust the limit as needed
-app.use(express.urlencoded({ limit: "110mb", extended: true }));
+app.use((req, res, next) => {
+  if (req.originalUrl.startsWith('/api/payment/webhook')) {
+      express.raw({ type: 'application/json' })(req, res, next);
+  } else {
+      express.json()(req, res, next);
+  }
+});
 
 //Server Status Endpoint
 app.get('/', (req, res) => {

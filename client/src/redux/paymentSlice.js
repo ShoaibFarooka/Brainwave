@@ -1,16 +1,19 @@
-import { createSlice } from "@reduxjs/toolkit";
+import { createSlice } from '@reduxjs/toolkit';
 
-const subscriptionDataSlice = createSlice({
-  name: "subscription",
-  initialState: {
-    subscriptionData: null,
-  },
+const initialState = {
+  paymentVerificationNeeded: false,
+};
+
+const paymentSlice = createSlice({
+  name: 'payment',
+  initialState,
   reducers: {
-    SetSubscriptionData: (state, action) => {
-      state.subscriptionData = action.payload;
+    setPaymentVerificationNeeded: (state, action) => {
+      state.paymentVerificationNeeded = action.payload;
     },
   },
 });
 
-export const { SetSubscriptionData } = subscriptionDataSlice.actions;
-export default subscriptionDataSlice.reducer;
+export const { setPaymentVerificationNeeded } = paymentSlice.actions;
+
+export default paymentSlice.reducer;

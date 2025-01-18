@@ -1,11 +1,10 @@
 const axios = require("axios");
 const qs = require("qs"); // Import qs (for x-www-form-urlencoded)
 const router = require("express").Router(); // Import express Router
-const bodyParser = require("body-parser"); // Middleware for parsing request bodies
+const moment = require("moment");
+const authMiddleware = require("../middlewares/authMiddleware");
 const Subscription = require("../models/subscriptionModel");
-
-// Middleware to parse JSON body data
-router.use(bodyParser.json());
+const User = require("../models/userModel");
 
 const createSubscription = async (user, plan, response) => {
   const paymentDate = new Date();
@@ -49,10 +48,11 @@ const createSubscription = async (user, plan, response) => {
 };
 
 // POST endpoint for initiating payment
-router.post("/", async (req, res) => {
+router.post("/create-invoice", authMiddleware, async (req, res) => {
   const url = "https://api.zeno.africa"; // Zeno API base URL
 
-  const { plan, user } = req.body;
+  const { plan, userId } = req.body;
+  const user = await User.findById(userId)
 
   if (!plan || !user) {
     return res.status(400).send("Plan and user data are required.");
@@ -64,24 +64,11 @@ router.post("/", async (req, res) => {
     buyer_phone: user.phoneNumber,
     buyer_email: user.email,
     amount: plan.discountedPrice, // Corrected the field spelling
-    account_id: "zp89768", // Your Zeno account ID
-    secret_key: "your_secret_key", // Replace with your actual secret key
-    api_key: "your_api_key", // Replace with your actual API key
-    webhook_url: "https://b600-39-52-46-126.ngrok-free.app/api/payment/webhook",
+    account_id: process.env.ZENOPAY_ACCOUNT_ID, // Your Zeno account ID
+    secret_key: process.env.ZENOPAY_SECRET_KEY, // Replace with your actual secret key
+    api_key: process.env.ZENOPAY_API_KEY, // Replace with your actual API key
+    webhook_url: process.env.ZENOPAY_WEBHOOK_URL,
   };
-
-  console.log(data, "data111");
-
-  // const data = {
-  //   buyer_name: "william",
-  //   buyer_phone: "0689726060",
-  //   buyer_email: "william@zeno.co.tz",
-  //   amount: 500,
-  //   account_id: "zp89768",
-  //   secret_key: null, // Replace with your actual secret key
-  //   api_key: null, // Replace with your actual API key
-  //   webhook_url: "https://b600-39-52-46-126.ngrok-free.app/api/payment/webhook",
-  // };
 
   // Convert data to x-www-form-urlencoded format
   const formattedData = qs.stringify(data);
@@ -108,17 +95,21 @@ router.post("/", async (req, res) => {
   }
 });
 
-router.get("/check-payment-status/:userId", async (req, res) => {
-  const { userId } = req.params;  
-
-  console.log(userId,"userdata")
-
+router.get("/check-payment-status", authMiddleware, async (req, res) => {
+  const { userId } = req.body;
   try {
     if (!userId) {
       return res.status(400).json({ error: "User ID is required" });
     }
-
-    const subscription = await Subscription.findOne({ user: userId }).populate("activePlan");
+    const currentDate = moment().format("YYYY-MM-DD");
+    const subscription = await Subscription.findOne(
+      {
+        user: userId,
+        status: "active",
+        paymentStatus: "paid",
+        endDate: { $ne: null, $gte: currentDate },
+      }
+    ).populate("activePlan");
 
     if (!subscription) {
       return res.status(404).json({ error: "Subscription not found" });
@@ -133,8 +124,8 @@ router.get("/check-payment-status/:userId", async (req, res) => {
     return res.status(200).json({
       paymentStatus: subscription.paymentStatus,
       amount: lastPayment.amount,
-      startDate:subscription.startDate,
-      endDate:subscription.endDate,
+      startDate: subscription.startDate,
+      endDate: subscription.endDate,
       plan: subscription.activePlan || "No active plan found", // Handle no active plan
     });
   } catch (error) {
@@ -143,11 +134,11 @@ router.get("/check-payment-status/:userId", async (req, res) => {
   }
 });
 
-
 // Webhook handler for payment updates
 router.post("/webhook", async (req, res) => {
   try {
     const paymentDate = new Date();
+    console.log('Payment Date: ', paymentDate);
 
     const formattedDate = `${paymentDate.getFullYear()}-${String(
       paymentDate.getMonth() + 1
@@ -157,7 +148,7 @@ router.post("/webhook", async (req, res) => {
 
     console.log("Webhook Data Received: ", data);
 
-    const { order_id, reference, status } = data;
+    const { order_id, reference, payment_status: status } = data;
 
     if (!order_id || !reference) {
       throw new Error("Invalid webhook payload");
@@ -184,7 +175,8 @@ router.post("/webhook", async (req, res) => {
       formattedDate;
 
     if (status === "COMPLETED") {
-      const endDate = paymentDate.setMonth(paymentDate.getMonth() +  subscription.paymentHistory[paymentHistoryIndex].plan.duration);
+      const endDate = paymentDate;
+      endDate.setMonth(endDate.getMonth() + subscription.paymentHistory[paymentHistoryIndex].plan.duration);
       const formattedEndDate = `${endDate.getFullYear()}-${String(
         endDate.getMonth() + 1
       ).padStart(2, "0")}-${String(endDate.getDate()).padStart(2, "0")}`;
@@ -193,15 +185,10 @@ router.post("/webhook", async (req, res) => {
       subscription.startDate = formattedDate;
       subscription.endDate = formattedEndDate;
       subscription.status = "active";
-    } else if (status === "FAILED") {
+    } else {
       subscription.paymentHistory[paymentHistoryIndex].paymentStatus = "failed";
       subscription.paymentStatus = "failed";
-      subscription.status = "pending";
-    } else {
-      subscription.paymentHistory[paymentHistoryIndex].paymentStatus =
-        "pending";
-      subscription.paymentStatus = "pending";
-      subscription.status = "pending";
+      subscription.status = "expired";
     }
 
     await subscription.save();

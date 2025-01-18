@@ -1,13 +1,15 @@
 import usersSlice from "./usersSlice";
 import { configureStore } from "@reduxjs/toolkit";
 import loaderSlice from "./loaderSlice";
-import subscriptionDataSlice from "./paymentSlice";
+import subscriptionSlice from "./subscriptionSlice";
+import paymentSlice from "./paymentSlice";
 
 const store = configureStore({
   reducer: {
-    users: usersSlice,
+    user: usersSlice,
     loader: loaderSlice,
-    subscription: subscriptionDataSlice,
+    subscription: subscriptionSlice,
+    payment: paymentSlice
   },
 });
 

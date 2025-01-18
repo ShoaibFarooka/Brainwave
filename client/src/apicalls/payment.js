@@ -2,7 +2,7 @@ const { default: axiosInstance } = require(".");
 
 export const addPayment = async (payload) => {
   try {
-    const response = await axiosInstance.post("/api/payment", payload);
+    const response = await axiosInstance.post("/api/payment/create-invoice", payload);
     return response.data;
   } catch (error) {
     return error.response.data;
@@ -10,9 +10,9 @@ export const addPayment = async (payload) => {
 };
 
 
-export const checkPaymentStatus = async ({userId}) => {
+export const checkPaymentStatus = async () => {
   try {
-    const response = await axiosInstance.get(`/api/payment/check-payment-status/`+userId,);
+    const response = await axiosInstance.get(`/api/payment/check-payment-status`,);
     return response.data;
   } catch (error) {
     return error.response.data;

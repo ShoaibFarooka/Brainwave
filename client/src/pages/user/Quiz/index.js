@@ -6,16 +6,13 @@ import { getAllReportsByUser } from "../../../apicalls/reports";
 import { HideLoading, ShowLoading } from "../../../redux/loaderSlice";
 import PageTitle from "../../../components/PageTitle";
 import { useNavigate } from "react-router-dom";
-import { checkPaymentStatus } from "../../../apicalls/payment";
-import {  SetSubscriptionData } from "../../../redux/paymentSlice";
 
 function Quiz() {
   const [exams, setExams] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  const { user } = useSelector((state) => state.users);
-  const { subscriptionData } = useSelector((state) => state.subscription);
+  const { user } = useSelector((state) => state.user);
 
 
   const getExams = async () => {
@@ -47,11 +44,11 @@ function Quiz() {
         (item) => item.exam && item.exam._id === exam._id
       ).length;
       console.log(retakeCount);
-      if (retakeCount >= 20) {
-        message.error("Max attempts reached");
-        dispatch(HideLoading());
-        return;
-      }
+      // if (retakeCount >= 3) {
+      //   message.error("Max attempts reached");
+      //   dispatch(HideLoading());
+      //   return;
+      // }
     } catch (error) {
       message.error("Unable to verify retake");
       dispatch(HideLoading());
@@ -95,12 +92,12 @@ function Quiz() {
           </div>
         )}
 
-        <Row gutter={[16, 16]}>
+        <Row gutter={[16, 16]} style={{ marginLeft: 0, marginRight: 0 }}>
           {/* Render filtered exams only if there are fewer filtered exams than total exams */}
           {filteredExams.map((exam, index) => (
             <Col xs={24} sm={12} md={8} lg={6} key={index}>
               <div
-                style={{ backgroundColor: "aliceblue" }}
+                style={{ backgroundColor: "aliceblue", height: '100%', boxSizing: 'border-box' }}
                 className="card-lg flex flex-col gap-1 p-2"
               >
                 <h1 className="text-2xl">{exam?.name}</h1>

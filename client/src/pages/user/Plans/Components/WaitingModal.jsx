@@ -4,30 +4,11 @@ import "./WaitingModal.css";
 
 Modal.setAppElement("#root"); // Ensure accessibility for screen readers
 
-const WaitingModal = ({ isOpen, onClose, timeoutDuration }) => {
-    const [timeLeft, setTimeLeft] = useState(timeoutDuration);
-
-    useEffect(() => {
-        if (isOpen) {
-            setTimeLeft(timeoutDuration);
-            const timer = setInterval(() => {
-                setTimeLeft((prev) => {
-                    if (prev <= 1) {
-                        clearInterval(timer);
-                        onClose(); // Close modal when timer reaches 0
-                        return 0;
-                    }
-                    return prev - 1;
-                });
-            }, 1000);
-            return () => clearInterval(timer);
-        }
-    }, [isOpen, timeoutDuration, onClose]);
-
+const WaitingModal = ({ isOpen, onClose }) => {
     return (
         <Modal
             isOpen={isOpen}
-            // onRequestClose={onClose}
+            onRequestClose={onClose}
             className="waiting-modal-content"
             overlayClassName="waiting-modal-overlay"
         >
