@@ -50,6 +50,7 @@ function ChatGPTIntegration() {
       const chatRes = await chatWithChatGPT(chatPayload);
 
       const apiResponse = chatRes?.data;
+      console.log('Api Response: ', apiResponse);
 
       // Append assistant's response to the conversation
       setMessages((prev) => [...prev, { role: "assistant", content: apiResponse }]);
@@ -83,7 +84,11 @@ function ChatGPTIntegration() {
             <>
               {msg.role === 'assistant' ?
                 <>
-                  <ContentRenderer text={msg.content} />
+                  {msg?.content ?
+                    <ContentRenderer text={msg.content} />
+                    :
+                    <p>Unable to get response from ai</p>
+                  }
                 </>
                 :
                 <>

@@ -126,6 +126,7 @@ router.get("/get-all-questions", authMiddleware, async (req, res) => {
             .find(filter)
             .populate("user")
             .populate("replies.user")
+            .sort({createdAt: -1})
             .skip(skip)
             .limit(limit);
 
