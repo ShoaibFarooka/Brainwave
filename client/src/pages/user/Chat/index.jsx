@@ -23,16 +23,10 @@ function ChatGPTIntegration() {
         const formData = new FormData();
         formData.append("image", imageFile);
 
-        const uploadRes = await axios.post(
-          "http://localhost:5000/api/chatgpt/image/upload",
-          formData,
-          {
-            headers: { "Content-Type": "multipart/form-data" },
-          }
-        );
+        const data = await uploadImg(formData);
 
-        if (uploadRes.data.success) {
-          imageUrl = uploadRes.data.url; // Extract the S3 URL
+        if (data?.success) {
+          imageUrl = data.url; // Extract the S3 URL
           console.log("Image URL: ", imageUrl);
         } else {
           throw new Error("Image upload failed");
