@@ -61,15 +61,13 @@ router.post("/register", async (req, res) => {
   try {
     // check if user already exists
     const userExists = await User.findOne({
-      $or: [
-        { email: req.body.email },
-        { phoneNumber: req.body.phoneNumber }
-      ]
+      $or: [{ email: req.body.email }, { phoneNumber: req.body.phoneNumber }],
     });
     if (userExists) {
-      return res
-        .status(409)
-        .send({ message: "User already exists with this email or number", success: false });
+      return res.status(409).send({
+        message: "User already exists with this email or number",
+        success: false,
+      });
     }
 
     // hash password
@@ -102,15 +100,13 @@ router.post("/otp", async (req, res) => {
 
     // check if user already exists
     const userExists = await User.findOne({
-      $or: [
-        { email },
-        { phoneNumber }
-      ]
+      $or: [{ email }, { phoneNumber }],
     });
     if (userExists) {
-      return res
-        .status(409)
-        .send({ message: "User already exists with this email or number", success: false });
+      return res.status(409).send({
+        message: "User already exists with this email or number",
+        success: false,
+      });
     }
 
     const randomOTP = generateOTP();
@@ -140,6 +136,48 @@ router.post("/otp", async (req, res) => {
     });
   }
 });
+
+router.post("/contact-us", async (req, res) => {
+  try {
+    const { name, email, message } = req.body;
+
+    const mailOptions = {
+      from: process.env.SENDER_EMAIL,
+      to: "mian056789@gmail.com", // Testing email
+      subject: "Contact Form Submission",
+      text: `${name} has successfully submitted a contact form. Here are the details:
+      
+- Name: ${name}  
+- Email: ${email}  
+- Message: ${message}`,
+    };
+
+    // Debug log: Verify the recipient and details
+    console.log("Mail Options:", mailOptions);
+
+    transporter.sendMail(mailOptions, (error, info) => {
+      if (error) {
+        console.error("Error sending email:", error);
+        return res.status(500).json({
+          message: "Error sending email.",
+          success: false,
+        });
+      }
+      console.log("Email sent:", info.response);
+      return res.json({
+        message: "Email sent successfully",
+        success: true,
+        data: null,
+      });
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: error.message,
+      success: false,
+    });
+  }
+});
+
 
 // user login
 
@@ -226,7 +264,9 @@ router.get("/get-all-users", async (req, res) => {
 
 router.post("/get-user-info", authMiddleware, async (req, res) => {
   try {
-    const user = await User.findById(req.body.userId).select("-password -createdAt -updatedAt -__v");
+    const user = await User.findById(req.body.userId).select(
+      "-password -createdAt -updatedAt -__v"
+    );
     res.send({
       message: "User info fetched successfully",
       success: true,
@@ -244,7 +284,8 @@ router.post("/get-user-info", authMiddleware, async (req, res) => {
 // update user info
 
 router.post("/update-user-info", authMiddleware, async (req, res) => {
-  const { name, email, school, class_, userId, schoolType, phoneNumber } = req.body;
+  const { name, email, school, class_, userId, schoolType, phoneNumber } =
+    req.body;
   try {
     const updatedUser = await User.findByIdAndUpdate(
       userId,
