@@ -67,6 +67,7 @@ const Home = () => {
       const data = await contactUs(formData);
 
       if (data.success) {
+        message.success("Message sent successfully!");
         setResponseMessage("Message sent successfully!");
         setFormData({ name: "", email: "", message: "" }); // Reset form
       } else {
