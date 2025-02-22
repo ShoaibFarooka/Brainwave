@@ -6,14 +6,61 @@ import { getAllReportsByUser } from "../../../apicalls/reports";
 import { HideLoading, ShowLoading } from "../../../redux/loaderSlice";
 import PageTitle from "../../../components/PageTitle";
 import { useNavigate } from "react-router-dom";
+import Select from "react-select";
+
+const primaryClasses = [
+  { value: "1", label: "Class 1" },
+  { value: "2", label: "Class 2" },
+  { value: "3", label: "Class 3" },
+  { value: "4", label: "Class 4" },
+  { value: "5", label: "Class 5" },
+  { value: "6", label: "Class 6" },
+  { value: "7", label: "Class 7" },
+];
+
+const secondaryClasses = [
+  { value: "Form-1", label: "Form 1" },
+  { value: "Form-2", label: "Form 2" },
+  { value: "Form-3", label: "Form 3" },
+  { value: "Form-4", label: "Form 4" },
+  { value: "Form-5", label: "Form 5" },
+  { value: "Form-6", label: "Form 6" },
+];
 
 function Quiz() {
   const [exams, setExams] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [reportsData, setReportsData] = useState([]);
+  const [selectedClass, setSelectedClass] = useState(null);
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const { user } = useSelector((state) => state.user);
+
+  const availableClasses =
+    user?.schoolType === "primary" ? primaryClasses : secondaryClasses;
+
+  useEffect(() => {
+    if (user && user.class) {
+      const defaultSelectedClass = availableClasses.find(
+        (option) => option.value === user.class
+      );
+      setSelectedClass(defaultSelectedClass);
+    }
+  }, [user, availableClasses]);
+
+  const handleClassChange = (selectedOption) => {
+    setSelectedClass(selectedOption);
+  };
+
+  const filteredExams = exams.filter(
+    (exam) =>
+      (!selectedClass || exam.class === selectedClass.value) &&
+      (exam.name?.toLowerCase().includes(searchQuery.toLowerCase().trim()) ||
+        exam.category
+          ?.toLowerCase()
+          .includes(searchQuery.toLowerCase().trim()) ||
+        exam.class?.toLowerCase().includes(searchQuery.toLowerCase().trim()))
+  );
 
   const getExams = async () => {
     try {
@@ -56,17 +103,10 @@ function Quiz() {
     try {
       dispatch(ShowLoading());
       const response = await getAllReportsByUser();
-      // Calculate how many times the user attempted this exam
       const retakeCount = response.data.filter(
         (item) => item.exam && item.exam._id === exam._id
       ).length;
       console.log("Retake count for exam:", retakeCount);
-      // Optionally you can check the retake count here and prevent further attempts
-      // if (retakeCount >= 3) {
-      //   message.error("Max attempts reached");
-      //   dispatch(HideLoading());
-      //   return;
-      // }
     } catch (error) {
       message.error("Unable to verify retake");
       dispatch(HideLoading());
@@ -76,44 +116,53 @@ function Quiz() {
     navigate(`/user/write-exam/${exam._id}`);
   };
 
-  // Handle search input change
   const handleSearch = (e) => {
     setSearchQuery(e.target.value);
   };
 
-  // Filter exams based on search query
-  const filteredExams = exams.filter(
-    (exam) =>
-      exam.name?.toLowerCase().includes(searchQuery.toLowerCase().trim()) ||
-      exam.category?.toLowerCase().includes(searchQuery.toLowerCase().trim()) ||
-      exam.class?.toLowerCase().includes(searchQuery.toLowerCase().trim())
-  );
-
   const shouldRenderFilteredExams = filteredExams.length < exams.length;
-
+  console.log("user123", user);
   return (
     user && (
-      <div>
+      <div style={{ minHeight: "80vh" }}>
         <PageTitle title={`Hi ${user.name}, Welcome it's time to study!!`} />
         <div className="divider"></div>
-        <input
-          type="text"
-          className="w-25 mb-2"
-          placeholder="Search exams"
-          value={searchQuery}
-          onChange={handleSearch}
-        />
+
+        {/* Search Bar */}
+        <div
+          className="flex justify-between items-center mb-2 mr-10 "
+          style={{ marginRight: "20px" }}
+        >
+          <input
+            type="text"
+            className="w-25 mb-2"
+            placeholder="Search exams"
+            value={searchQuery}
+            onChange={handleSearch}
+          />
+
+          {/* Class Selector */}
+          <Select
+            options={availableClasses}
+            value={selectedClass}
+            onChange={handleClassChange}
+            placeholder="Select Class"
+            styles={{ width: "300px" }}
+          />
+        </div>
+
         {shouldRenderFilteredExams && (
           <div className="mb-2">
             <span>{`Filtered ${filteredExams.length} out of ${exams.length}`}</span>
           </div>
         )}
+
         <Row gutter={[16, 16]} style={{ marginLeft: 0, marginRight: 0 }}>
           {filteredExams.map((exam, index) => {
-            // Check if a report exists for this exam by comparing exam._id
             const examReport = reportsData.find(
               (report) => report.exam && report.exam._id === exam._id
             );
+
             return (
               <Col xs={24} sm={12} md={8} lg={6} key={index}>
                 <div
@@ -121,7 +170,9 @@ function Quiz() {
                     backgroundColor:
                       examReport?.result?.verdict?.toLowerCase() === "fail"
                         ? "#ffc1b3"
-                        :  examReport?.result?.verdict?.toLowerCase() === "pass" ? '#cfffb3':"aliceblue",
+                        : examReport?.result?.verdict?.toLowerCase() === "pass"
+                        ? "#cfffb3"
+                        : "aliceblue",
                     height: "100%",
                     boxSizing: "border-box",
                   }}
