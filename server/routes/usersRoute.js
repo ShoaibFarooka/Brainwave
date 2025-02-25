@@ -143,7 +143,7 @@ router.post("/contact-us", async (req, res) => {
 
     const mailOptions = {
       from: process.env.SENDER_EMAIL,
-      to: "shoaibfarooka@gmail.com", // Testing email
+      to: process.env.OWNER_EMAIL,
       subject: "Contact Form Submission",
       text: `${name} has successfully submitted a contact form. Here are the details:
       
