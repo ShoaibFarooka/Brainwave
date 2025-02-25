@@ -27,7 +27,7 @@ router.post("/add-report", authMiddleware, async (req, res) => {
 
 router.post("/get-all-reports", authMiddleware, async (req, res) => {
   try {
-    const { examName, userName, page , limit  } = req.body;
+    const { examName, userName, page, limit } = req.body;
 
     // Fetch exams matching the name
     const exams = await Exam.find({
@@ -247,6 +247,5 @@ router.get("/get-all-reports-for-ranking", authMiddleware, async (req, res) => {
     });
   }
 });
-
 
 module.exports = router;

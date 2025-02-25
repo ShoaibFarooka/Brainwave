@@ -78,12 +78,35 @@ function Quiz() {
     }
   };
 
+  const filterReportsData = (data) => {
+    const reportsMap = {};
+
+    // Iterate over the response data (reports)
+    data.forEach(report => {
+      const examId = report.exam._id;
+      const verdict = report.result.verdict;
+
+      // If the examId is not already in the map, add it
+      if (!reportsMap[examId]) {
+        reportsMap[examId] = report;
+      } else {
+        // If there is already an entry for this exam, keep the one with "pass" verdict, or just keep the first one if no "pass"
+        if (verdict === "Pass" && reportsMap[examId].result.verdict !== "Pass") {
+          reportsMap[examId] = report; // Replace with the "pass" verdict report
+        }
+      }
+    });
+
+    return Object.values(reportsMap);
+  };
+
   const getData = async () => {
     try {
       dispatch(ShowLoading());
       const response = await getAllReportsByUser();
       if (response.success) {
-        setReportsData(response.data);
+
+        setReportsData(filterReportsData(response.data));
       } else {
         message.error(response.message);
       }
@@ -124,31 +147,38 @@ function Quiz() {
   console.log("user123", user);
   return (
     user && (
-      <div style={{ minHeight: "80vh" }}>
+      <div style={{ minHeight: "80vh", paddingBottom: '20px' }}>
         <PageTitle title={`Hi ${user.name}, Welcome it's time to study!!`} />
         <div className="divider"></div>
 
-        {/* Search Bar */}
+
         <div
-          className="flex justify-between items-center mb-2 mr-10 "
+          className="flex justify-between items-center mb-2 flex-wrap"
           style={{ marginRight: "20px" }}
         >
-          <input
-            type="text"
-            className="w-25 mb-2"
-            placeholder="Search exams"
-            value={searchQuery}
-            onChange={handleSearch}
-          />
+          <div className="flex flex-col gap-1">
+            {/* Search Bar */}
+            <div>Search Quiz Title:</div>
+            <input
+              type="text"
+              className="w-100 mb-2"
+              placeholder="Search quizes"
+              value={searchQuery}
+              onChange={handleSearch}
+            />
+          </div>
 
-          {/* Class Selector */}
-          <Select
-            options={availableClasses}
-            value={selectedClass}
-            onChange={handleClassChange}
-            placeholder="Select Class"
-            styles={{ width: "300px" }}
-          />
+          <div className="flex flex-col gap-1">
+            {/* Class Selector */}
+            <div>Please Select Class:</div>
+            <Select
+              options={availableClasses}
+              value={selectedClass}
+              onChange={handleClassChange}
+              placeholder="Select Class"
+              styles={{ width: "300px" }}
+            />
+          </div>
         </div>
 
         {shouldRenderFilteredExams && (
@@ -171,8 +201,8 @@ function Quiz() {
                       examReport?.result?.verdict?.toLowerCase() === "fail"
                         ? "#ffc1b3"
                         : examReport?.result?.verdict?.toLowerCase() === "pass"
-                        ? "#cfffb3"
-                        : "aliceblue",
+                          ? "#cfffb3"
+                          : "aliceblue",
                     height: "100%",
                     boxSizing: "border-box",
                   }}
