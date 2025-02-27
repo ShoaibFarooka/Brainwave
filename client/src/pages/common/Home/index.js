@@ -47,9 +47,13 @@ const Home = () => {
     getReviews();
   }, []);
 
-  const scrollToSection = (ref) => {
+  const scrollToSection = (ref, offset = 30) => {
     if (ref && ref.current) {
-      ref.current.scrollIntoView({ behavior: "smooth" });
+      const sectionTop = ref.current.offsetTop;
+      window.scrollTo({
+        top: sectionTop - offset,
+        behavior: "smooth"
+      });
     }
   };
 
