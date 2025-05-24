@@ -18,6 +18,15 @@ export const sendOTP = async (payload) => {
     }
 }
 
+export const contactUs = async (payload) => {
+    try {
+        const response = await axiosInstance.post('/api/users/contact-us', payload);
+        return response.data;
+    } catch (error) {
+        return error.response.data;
+    }
+}
+
 
 export const loginUser = async (payload) => {
     try {
@@ -68,6 +77,15 @@ export const updateUserPhoto = async (payload) => {
 export const blockUserById = async (payload) => {
     try {
         const response = await axiosInstance.patch('/api/users/block-user', payload);
+        return response.data;
+    } catch (error) {
+        return error.response.data;
+    }
+}
+
+export const deleteUserById = async (payload) => {
+    try {
+        const response = await axiosInstance.delete('/api/users/delete-user', { data: payload });
         return response.data;
     } catch (error) {
         return error.response.data;

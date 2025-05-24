@@ -1,16 +1,33 @@
 const router = require("express").Router();
-const forumQuestion = require("../models/forumQuestionModel");
+const ForumQuestion = require("../models/forumQuestionModel");
 const authMiddleware = require("../middlewares/authMiddleware");
+const User = require("../models/userModel");
 
 // add question in the forum
 
 router.post("/add-question", authMiddleware, async (req, res) => {
+    const startTime = performance.now();
+    const userId = req.body.userId; // Assuming userId is retrieved from the authMiddleware
+
+    // Fetch the requesting user's details
+    const user = await User.findById(userId);
+
+    if (!user) {
+        return res.status(404).send({
+            message: "User not found",
+            success: false,
+        });
+    }
+
+    const userSchoolType = user.schoolType;
+
     try {
         const { title, body, userId } = req.body;
-        const newForumQuestion = new forumQuestion({
+        const newForumQuestion = new ForumQuestion({
             title,
             body,
-            user: userId
+            user: userId,
+            schoolType: userSchoolType
         });
         await newForumQuestion.save();
         res.send({
@@ -29,12 +46,26 @@ router.post("/add-question", authMiddleware, async (req, res) => {
 // add reply to the question in the forum
 
 router.post("/add-reply", authMiddleware, async (req, res) => {
+    const userId = req.body.userId; // Assuming userId is retrieved from the authMiddleware
+
+    // Fetch the requesting user's details
+    const user = await User.findById(userId);
+
+    if (!user) {
+        return res.status(404).send({
+            message: "User not found",
+            success: false,
+        });
+    }
+
+    const userSchoolType = user.schoolType;
     try {
         const { text, questionId, userId } = req.body;
-        const question = await forumQuestion.findById(questionId);
+        const question = await ForumQuestion.findById(questionId);
         question.replies.push({
             text,
             user: userId,
+            schoolType: userSchoolType
         });
         await question.save();
         res.send({
@@ -54,15 +85,63 @@ router.post("/add-reply", authMiddleware, async (req, res) => {
 
 router.get("/get-all-questions", authMiddleware, async (req, res) => {
     const startTime = performance.now();
+    const userId = req.body.userId; // Assuming userId is retrieved from the authMiddleware
+
+    // Fetch the requesting user's details
+    const user = await User.findById(userId);
+
+    if (!user) {
+        return res.status(404).send({
+            message: "User not found",
+            success: false,
+        });
+    }
+
+    const userSchoolType = user.schoolType;
+    const isAdmin = user.isAdmin;
+
     try {
-        const questions = await forumQuestion.find()
-            .populate('user')
-            .populate('replies.user');
+        // Extract page and limit from query parameters, with default values
+        const page = parseInt(req.query.page) || 1; // Default to page 1
+        const limit = parseInt(req.query.limit) || 10; // Default to 10 questions per page
+
+        // Calculate the starting index for pagination
+        const skip = (page - 1) * limit;
+
+        let filter = {};
+
+        // Define the filter condition based on schoolType
+        if (userSchoolType === "secondary") {
+            filter = { schoolType: "secondary" };
+        } else {
+            filter = { schoolType: { $ne: "secondary" } }; // Exclude "secondary"
+        }
+
+        if (isAdmin) {
+            filter = {};
+        }
+
+        // Fetch questions with the defined filter and pagination
+        const questions = await ForumQuestion
+            .find(filter)
+            .populate("user")
+            .populate("replies.user")
+            .sort({createdAt: -1})
+            .skip(skip)
+            .limit(limit);
+
+        // Get the total count of questions matching the filter
+        const totalQuestions = await ForumQuestion.countDocuments(filter);
+
         const endTime = performance.now();
-        console.log('Time taken in miliseconds by forum endpoint', endTime - startTime);
+        // console.log("Time taken in milliseconds by forum endpoint", endTime - startTime);
+
         res.send({
-            message: "questions fetched successfully",
+            message: "Questions fetched successfully",
             data: questions,
+            currentPage: page,
+            totalPages: Math.ceil(totalQuestions / limit),
+            totalQuestions: totalQuestions,
             success: true,
         });
     } catch (error) {
@@ -74,10 +153,12 @@ router.get("/get-all-questions", authMiddleware, async (req, res) => {
     }
 });
 
+
+
 router.delete("/delete-question/:questionId", authMiddleware, async (req, res) => {
     try {
         const { questionId } = req.params;
-        const deletedQuestion = await forumQuestion.findByIdAndDelete(questionId);
+        const deletedQuestion = await ForumQuestion.findByIdAndDelete(questionId);
         if (!deletedQuestion) {
             return res.send({
                 message: "Unable to delete question",
@@ -98,10 +179,25 @@ router.delete("/delete-question/:questionId", authMiddleware, async (req, res) =
 });
 
 router.put("/update-question/:questionId", authMiddleware, async (req, res) => {
+    const userId = req.body.userId; // Assuming userId is retrieved from the authMiddleware
+
+    // Fetch the requesting user's details
+    const user = await User.findById(userId);
+
+    if (!user) {
+        return res.status(404).send({
+            message: "User not found",
+            success: false,
+        });
+    }
+
+    const userSchoolType = user.schoolType;
+
     try {
         const { questionId } = req.params;
         const { title, body } = req.body;
-        const updatedQuestion = await forumQuestion.findByIdAndUpdate(questionId, { title, body });
+
+        const updatedQuestion = await ForumQuestion.findByIdAndUpdate(questionId, { title, body, schoolType: userSchoolType });
         if (!updatedQuestion) {
             return res.send({
                 message: "Unable to update question",
@@ -131,7 +227,7 @@ router.put("/update-reply-status/:questionId", authMiddleware, async (req, res) 
                 message: "QuestionId, replyId and status are required."
             });
         }
-        const question = await forumQuestion.findById(questionId);
+        const question = await ForumQuestion.findById(questionId);
         if (!question) {
             return res.status(404).send({
                 success: false,

@@ -17,6 +17,16 @@ const noteSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
+  documentUrl: {
+    type: String,
+    required: false,
+  },
+  schoolType: {
+    type: String,
+    enum: ["primary", "secondary"],
+    default: "primary", 
+    required: false,   
+  },
 });
 
 const Notes = mongoose.model("notes", noteSchema);

@@ -17,6 +17,20 @@ const videoSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
+  videoUrl: {
+    type: String,
+    required: false,
+  },
+  thumbnail: {
+    type: String,
+    required: false,
+  },
+  schoolType: {
+    type: String,
+    enum: ["primary", "secondary"],
+    default: "primary", 
+    required: false,   
+  },
 });
 
 const Videos = mongoose.model("videos", videoSchema);

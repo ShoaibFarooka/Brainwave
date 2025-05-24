@@ -17,6 +17,16 @@ const paperSchema = new mongoose.Schema({
         type: String,
         required: true,
     },
+    schoolType: {
+        type: String,
+        enum: ["primary", "secondary"],
+        default: "primary", 
+        required: false,   
+      },
+      documentUrl: {
+        type: String,
+        required: false,
+      },
     documentID: {
         type: String,
         required: true,

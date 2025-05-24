@@ -9,6 +9,12 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    schoolType: {
+      type: String,
+      enum: ["primary", "secondary"],
+      default: "primary",
+      required: false,
+    },
     class: {
       type: String,
       required: true,
@@ -17,6 +23,16 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: true,
       unique: true,
+    },
+    phoneNumber: {
+      type: String,
+      required: true,
+      unique: true,
+    },
+    paymentRequired: {
+      type: Boolean,
+      required: false,
+      default: false,
     },
     profileImage: {
       type: String,

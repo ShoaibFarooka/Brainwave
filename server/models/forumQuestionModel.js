@@ -9,6 +9,12 @@ const forumQuestionSchema = new mongoose.Schema({
         type: String,
         required: true
     },
+    schoolType: {
+        type: String,
+        enum: ["primary", "secondary"],
+        default: "primary",
+        required: false,
+    },
     user: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "users",
