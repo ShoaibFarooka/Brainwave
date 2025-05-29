@@ -90,8 +90,6 @@ const Ranking = () => {
         const suffix = userId.slice(-4);
         return `${prefix}.....${suffix}`;
     };
-    console.log(userData, 'userData')
-    console.log(rankingData?.filter(user => user?.userClass === userData?.class), 'rankingData')
 
     return (
         <div className="Ranking">
