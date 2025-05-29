@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { getPlans } from "../../../apicalls/plans";
 import "./Plans.css";
-import ConfirmModal from "./components/ConfirmModal";
-import WaitingModal from "./components/WaitingModal";
+import ConfirmModal from "./Components/ConfirmModal";
+import WaitingModal from "./Components/WaitingModal";
 import { addPayment } from "../../../apicalls/payment";
 import { useDispatch, useSelector } from "react-redux";
 import { setPaymentVerificationNeeded } from "../../../redux/paymentSlice";
