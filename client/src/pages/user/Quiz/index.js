@@ -147,7 +147,7 @@ function Quiz() {
   };
 
   const shouldRenderFilteredExams = filteredExams.length < exams.length;
-  console.log("user123", user);
+  
   return (
     user && (
       <div style={{ minHeight: "80vh", paddingBottom: '20px' }}>

@@ -123,7 +123,7 @@ function WriteExam() {
       getExamData();
     }
   }, []);
-  
+
 
   console.log(questions, "questions");
   return (
@@ -133,6 +133,11 @@ function WriteExam() {
         <h1 className={`text-center ${isMobile ? "text-xl" : ""}`}>
           {examData.name}
         </h1>
+
+        {view === "questions" && (<h1 className={`text-center ${isMobile ? "text-md" : "text-lg"} m-2`}>
+          Questions {selectedQuestionIndex + 1} of {questions.length}
+        </h1>
+        )}
         <div className="divider"></div>
 
         {view === "instructions" && (
@@ -147,7 +152,6 @@ function WriteExam() {
           <div className="flex flex-col gap-2">
             <div className="flex justify-between">
               <h1 className={isMobile ? "text-lg" : "text-2xl"}>
-                {selectedQuestionIndex + 1} :{" "}
                 {questions[selectedQuestionIndex].name}
               </h1>
 
@@ -163,7 +167,7 @@ function WriteExam() {
                 <img
                   src={questions[selectedQuestionIndex].image}
                   alt="Question image"
-                  style={{ height: "200px", maxWidth:'200px'}}
+                  style={{ height: "200px", maxWidth: '200px' }}
                 />
               )}
             </div>
@@ -188,11 +192,10 @@ function WriteExam() {
                   questions[selectedQuestionIndex]?.options || {}
                 ).map((option, index) => (
                   <div
-                    className={`flex gap-2 flex-col ${
-                      selectedOptions[selectedQuestionIndex] === option
+                    className={`flex gap-2 flex-col ${selectedOptions[selectedQuestionIndex] === option
                         ? "selected-option"
                         : "option"
-                    }`}
+                      }`}
                     key={index}
                     onClick={() => {
                       setSelectedOptions({
@@ -286,9 +289,8 @@ function WriteExam() {
 
                   <div className="flex gap-2 mt-2">
                     <button
-                      className={`primary-outline-btn ${
-                        isMobile ? "mobile-btn" : ""
-                      }`}
+                      className={`primary-outline-btn ${isMobile ? "mobile-btn" : ""
+                        }`}
                       onClick={() => {
                         setView("instructions");
                         setSelectedQuestionIndex(0);
@@ -300,9 +302,8 @@ function WriteExam() {
                       Retake Exam
                     </button>
                     <button
-                      className={`primary-contained-btn ${
-                        isMobile ? "mobile-btn" : ""
-                      }`}
+                      className={`primary-contained-btn ${isMobile ? "mobile-btn" : ""
+                        }`}
                       onClick={() => {
                         setView("review");
                       }}
@@ -345,9 +346,8 @@ function WriteExam() {
               return (
                 <div
                   className={`
-                  flex flex-col gap-1 p-2 ${
-                    isCorrect ? "bg-success" : "bg-error"
-                  }
+                  flex flex-col gap-1 p-2 ${isCorrect ? "bg-success" : "bg-error"
+                    }
                 `}
                   key={index}
                 >
