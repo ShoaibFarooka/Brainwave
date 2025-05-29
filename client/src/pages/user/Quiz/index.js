@@ -221,7 +221,7 @@ function Quiz() {
                     className="primary-outlined-btn"
                     onClick={() => verifyRetake(exam)}
                   >
-                    Start Exam
+                    Start Quiz
                   </button>
                 </div>
               </Col>
