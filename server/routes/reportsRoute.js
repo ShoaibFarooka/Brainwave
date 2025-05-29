@@ -2,6 +2,7 @@ const authMiddleware = require("../middlewares/authMiddleware");
 const Exam = require("../models/examModel");
 const User = require("../models/userModel");
 const Report = require("../models/reportModel");
+const Subscription = require("../models/subscriptionModel");
 const router = require("express").Router();
 
 // add report
@@ -234,11 +235,35 @@ router.get("/get-all-reports-for-ranking", authMiddleware, async (req, res) => {
       }
     ]);
 
+    const updatedResults = await Promise.all(
+      distinctPassReportsCountPerUser.map(async (row) => {
+        const subscription = await Subscription.findOne({ user: row.userId });
+
+        let subscriptionStatus = "expired";
+
+        if (subscription && subscription.paymentStatus === "paid" && new Date(subscription.endDate) > new Date()) {
+          const history = subscription.paymentHistory || [];
+          const lastPayment = history[history.length - 1];
+
+          if (lastPayment && lastPayment.paymentStatus === "paid") {
+            subscriptionStatus = "active";
+          }
+        }
+
+        return {
+          ...row,
+          subscriptionStatus
+        };
+      })
+    );
+
     res.send({
       message: "Reports for all users fetched successfully",
-      data: distinctPassReportsCountPerUser,
+      data: updatedResults,
       success: true
     });
+
+
   } catch (error) {
     res.status(500).send({
       message: error.message,

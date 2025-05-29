@@ -68,10 +68,17 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    background: linear-gradient(90deg, #3264e9, #2349b1);
     padding: 8px 12px;
     border-radius: 8px;
     width: 100%;
+}
+
+.Active_bg{
+    background: linear-gradient(90deg, #3264e9, #2349b1);
+}
+
+.Expired_bg{
+    background: linear-gradient(90deg, #949494, #a8a7a7);
 }
 
 .Ranking .name {

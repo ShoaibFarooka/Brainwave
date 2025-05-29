@@ -31,6 +31,8 @@ const Ranking = () => {
         }
     }
 
+    console.log(rankingData,'rankingData')
+
     const getUserData = async () => {
         try {
             const response = await getUserInfo();
@@ -107,7 +109,7 @@ const Ranking = () => {
                                                 <IoPersonCircleOutline className="profile-icon" />
                                             }
                                         </div>
-                                        <div className="flex">
+                                        <div className={`flex ${user?.subscriptionStatus === "active" ? 'Active_bg' : 'Expired_bg'}`}>
                                             <div className="name">{user.userName}</div>
                                             <div className="school">{user.userSchool ? user.userSchool : 'Not Enrolled'}</div>
                                             <div className="class">{user.userClass ? user.userClass : 'Not Enrolled'}</div>
