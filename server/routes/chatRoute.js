@@ -70,6 +70,88 @@ router.post("/chat", async (req, res) => {
   }
 });
 
+// ✔️ NEW – AI ­answer-checker
+router.post("/check-answer", async (req, res) => {
+  try {
+    const questions = req.body;
+
+    if (!Array.isArray(questions) || questions.length === 0) {
+      return res.status(400).json({
+        success: false,
+        error: "Request body must be a non-empty array of questions",
+      });
+    }
+
+    const results = [];
+
+    for (const item of questions) {
+      const { question, expectedAnswer, userAnswer } = item;
+
+      if (!question || !expectedAnswer || !userAnswer) {
+        results.push({
+          question,
+          success: false,
+          error: "question, expectedAnswer and userAnswer are required",
+        });
+        continue;
+      }
+
+      const messages = [
+        {
+          role: "system",
+          content:
+            'You are an examiner. Compare the student\'s answer with the expected answer. ' +
+            'Reply ONLY with valid JSON: {"isCorrect": true/false, "reason": "short explanation"}.',
+        },
+        {
+          role: "user",
+          content: `QUESTION: ${question}\nEXPECTED ANSWER: ${expectedAnswer}\nSTUDENT ANSWER: ${userAnswer}`,
+        },
+      ];
+
+      try {
+        const { data } = await axios.post(
+          "https://api.openai.com/v1/chat/completions",
+          {
+            model: "gpt-4o",
+            messages,
+            temperature: 0,
+          },
+          {
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+            },
+          }
+        );
+
+        const aiJson = JSON.parse(data.choices[0].message.content.trim());
+
+        results.push({
+          question,
+          expectedAnswer,
+          userAnswer,
+          result: aiJson,
+          success: true,
+        });
+      } catch (innerError) {
+        console.error("OpenAI error:", innerError.message);
+        results.push({
+          question,
+          expectedAnswer,
+          userAnswer,
+          success: false,
+          error: "AI response failed or returned invalid JSON",
+        });
+      }
+    }
+
+    res.status(200).json({ success: true, data: results });
+  } catch (error) {
+    console.error("Answer-check error:", error.message);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
 
 
 module.exports = router;

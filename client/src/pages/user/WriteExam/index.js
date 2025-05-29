@@ -13,6 +13,7 @@ import useWindowSize from "react-use/lib/useWindowSize";
 import PassSound from "../../../assets/pass.mp3";
 import FailSound from "../../../assets/fail.mp3";
 import TextArea from "antd/es/input/TextArea";
+import { chatWithChatGPTToGetAns } from "../../../apicalls/chat";
 
 function WriteExam() {
   const [examData, setExamData] = React.useState(null);
@@ -51,30 +52,156 @@ function WriteExam() {
     }
   };
 
+  // const calculateResult = async () => {
+  //   try {
+  //     let correctAnswers = [];
+  //     let wrongAnswers = [];
+
+  //     questions.forEach((question, index) => {
+  //       if (question?.correctOption === selectedOptions[index]) {
+  //         correctAnswers.push(question);
+  //       } else {
+  //         wrongAnswers.push(question);
+  //       }
+  //     });
+
+  //     let verdict = "Pass";
+  //     if (correctAnswers.length < examData.passingMarks) {
+  //       verdict = "Fail";
+  //     }
+
+  //     const tempResult = {
+  //       correctAnswers,
+  //       wrongAnswers,
+  //       verdict,
+  //     };
+  //     setResult(tempResult);
+  //     dispatch(ShowLoading());
+  //     const response = await addReport({
+  //       exam: params.id,
+  //       result: tempResult,
+  //       user: user._id,
+  //     });
+  //     dispatch(HideLoading());
+  //     if (response.success) {
+  //       setView("result");
+  //       window.scrollTo(0, 0);
+  //       new Audio(verdict === "Pass" ? PassSound : FailSound).play();
+  //     } else {
+  //       message.error(response.message);
+  //     }
+  //   } catch (error) {
+  //     dispatch(HideLoading());
+  //     message.error(error.message);
+  //   }
+  // };
+
+
+  const checkFreeTextAnswers = async (payload) => {
+    if (!payload.length) return [];
+    const { data } = await chatWithChatGPTToGetAns(payload);
+    return data;
+  };
+
+  const explainWrongAnswers = async (payload) => {
+    if (!payload.length) return [];
+    const { data } = await chatWithChatGPTToGetAns(payload);
+    return data;
+  };
+
   const calculateResult = async () => {
     try {
-      let correctAnswers = [];
-      let wrongAnswers = [];
+      // 1️⃣ Build payload for Free Text questions
+      const freeTextPayload = [];
+      const indexMap = [];
 
-      questions.forEach((question, index) => {
-        if (question?.correctOption === selectedOptions[index]) {
-          correctAnswers.push(question);
-        } else {
-          wrongAnswers.push(question);
+      questions.forEach((q, idx) => {
+        if (q.answerType === "Free Text") {
+          indexMap.push(idx);
+          freeTextPayload.push({
+            question: q.name,
+            expectedAnswer: q.correctOption,
+            userAnswer: selectedOptions[idx] || "",
+          });
         }
       });
 
-      let verdict = "Pass";
-      if (correctAnswers.length < examData.passingMarks) {
-        verdict = "Fail";
+      // 2️⃣ Get GPT verdicts for free text
+      const gptResults = await checkFreeTextAnswers(freeTextPayload);
+      const gptMap = {};
+
+      gptResults.forEach((r) => {
+        if (r.result && typeof r.result.isCorrect === "boolean") {
+          gptMap[r.question] = r.result;
+        } else if (typeof r.isCorrect === "boolean") {
+          gptMap[r.question] = { isCorrect: r.isCorrect, reason: r.reason || "" };
+        }
+      });
+
+      // 3️⃣ Grade everything
+      const correctAnswers = [];
+      const wrongAnswers = [];
+      const wrongPayload = [];
+
+      questions.forEach((q, idx) => {
+        const userAnswerKey = selectedOptions[idx] || "";
+
+        if (q.answerType === "Free Text") {
+          const { isCorrect = false, reason = "" } = gptMap[q.name] || {};
+          const enriched = { ...q, userAnswer: userAnswerKey, reason };
+
+          if (isCorrect) {
+            correctAnswers.push(enriched);
+          } else {
+            wrongAnswers.push(enriched);
+            wrongPayload.push({
+              question: q.name,
+              expectedAnswer: q.correctOption,
+              userAnswer: userAnswerKey,
+            });
+          }
+
+        } else if (q.answerType === "Options") {
+          const correctKey = q.correctOption;
+          const correctValue = q.options[correctKey];
+          const userValue = q.options[userAnswerKey] || "";
+
+          const isCorrect = correctKey === userAnswerKey;
+          const enriched = { ...q, userAnswer: userAnswerKey };
+
+          if (isCorrect) {
+            correctAnswers.push(enriched);
+          } else {
+            wrongAnswers.push(enriched);
+            wrongPayload.push({
+              question: q.name,
+              expectedAnswer: correctValue,
+              userAnswer: userValue,
+            });
+          }
+        }
+      });
+
+      // 4️⃣ Get GPT explanations for all wrong answers
+      if (wrongPayload.length) {
+        const explain = await explainWrongAnswers(wrongPayload);
+        const reasonMap = {};
+
+        explain.forEach((r) => {
+          if (r.result?.reason) reasonMap[r.question] = r.result.reason;
+        });
+
+        wrongAnswers.forEach((w) => {
+          w.reason = reasonMap[w.name] || w.reason || "";
+        });
       }
 
-      const tempResult = {
-        correctAnswers,
-        wrongAnswers,
-        verdict,
-      };
+      // 5️⃣ Final result
+      const verdict = correctAnswers.length >= examData.passingMarks ? "Pass" : "Fail";
+      const tempResult = { correctAnswers, wrongAnswers, verdict };
+
       setResult(tempResult);
+
       dispatch(ShowLoading());
       const response = await addReport({
         exam: params.id,
@@ -82,6 +209,7 @@ function WriteExam() {
         user: user._id,
       });
       dispatch(HideLoading());
+
       if (response.success) {
         setView("result");
         window.scrollTo(0, 0);
@@ -94,6 +222,8 @@ function WriteExam() {
       message.error(error.message);
     }
   };
+
+  console.log(result, 'RESULT')
 
   const startTimer = () => {
     let totalSeconds = examData.duration;
@@ -193,8 +323,8 @@ function WriteExam() {
                 ).map((option, index) => (
                   <div
                     className={`flex gap-2 flex-col ${selectedOptions[selectedQuestionIndex] === option
-                        ? "selected-option"
-                        : "option"
+                      ? "selected-option"
+                      : "option"
                       }`}
                     key={index}
                     onClick={() => {
@@ -341,30 +471,60 @@ function WriteExam() {
         {view === "review" && (
           <div className="flex flex-col gap-2">
             {questions.map((question, index) => {
-              const isCorrect =
-                question?.correctOption === selectedOptions[index];
+              const isCorrect = question.correctOption === selectedOptions[index];
+
+              // find the matching wrong-answer object (if any)
+              const wrongObj = result.wrongAnswers.find(
+                (w) => w.name === question.name   // or w._id === question._id
+              );
+
               return (
                 <div
-                  className={`
-                  flex flex-col gap-1 p-2 ${isCorrect ? "bg-success" : "bg-error"
-                    }
-                `}
                   key={index}
+                  className={`flex flex-col gap-1 p-2 ${isCorrect ? "bg-success" : "bg-error"
+                    }`}
                 >
                   <h1 className={isMobile ? "text-md" : "text-xl"}>
-                    {index + 1} : {question?.name}
+                    {index + 1} : {question.name}
                   </h1>
+
+                  {/* submitted answer line */}
                   <h1 className={isMobile ? "text-sm" : "text-md"}>
-                    Submitted Answer : {selectedOptions[index]} -{" "}
-                    {question?.options && question?.options[selectedOptions[index]]}
+                    Submitted Answer :{" "}
+                    {question.answerType === "Options"
+                      ? `${selectedOptions[index]} ${question.options?.[selectedOptions[index]] || ""
+                      }`
+                      : selectedOptions[index]}
                   </h1>
+
+                  {/* correct answer line */}
                   <h1 className={isMobile ? "text-sm" : "text-md"}>
-                    Correct Answer : {question?.correctOption} -{" "}
-                    {question?.options && question?.options[question?.correctOption]}
+                    Correct Answer :{" "}
+                    {question.answerType === "Options"
+                      ? `${question.correctOption} ${question.options?.[question.correctOption] || ""
+                      }`
+                      : question.correctOption}
                   </h1>
+
+                  {/* reason line – only for wrong answers and when GPT gave one */}
+                  {!isCorrect && wrongObj?.reason && (
+                    <h1 className={isMobile ? "text-sm" : "text-md"}>
+                      Reason : {wrongObj.reason}
+                    </h1>
+                  )}
+
+                  {/* image if available */}
+                  {question.image && (
+                    <img
+                      src={question.image}
+                      alt="Question image"
+                      style={{ height: "200px", maxWidth: '300px' }}
+                    />
+                  )}
                 </div>
               );
             })}
+
 
             <div className="flex justify-center gap-2">
               <button
