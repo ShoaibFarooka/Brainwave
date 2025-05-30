@@ -124,6 +124,12 @@ function ProtectedRoute({ children }) {
       onClick: () => navigate("/profile"),
     },
     {
+      title: "Announcements",
+      paths: ["/admin/announcements"],
+      icon: <i className="ri-notification-line"></i>,
+      onClick: () => navigate("/admin/announcements"),
+    },
+    {
       title: "Logout",
       paths: ["/logout"],
       icon: <i className="ri-logout-box-line"></i>,
