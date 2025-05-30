@@ -12,6 +12,8 @@ import {
   updateAnnouncement,
 } from "../../../apicalls/announcements";
 import "./announcement.css"; // your custom styles
+import { HideLoading, ShowLoading } from "../../../redux/loaderSlice";
+import { useDispatch } from "react-redux";
 
 export default function Announcement() {
   const [list, setList] = useState([]);
@@ -20,10 +22,12 @@ export default function Announcement() {
   const [form, setForm] = useState({ heading: "", description: "" });
   const [editingId, setEditingId] = useState(null);
 
+  const dispatch = useDispatch();
+
   const fetchAll = async () => {
-    setLoading(true);
+    dispatch(ShowLoading());
     const res = await getAnnouncements();
-    setLoading(false);
+    dispatch(HideLoading());
     if (res.success !== false) setList(res);
     else message.error(res.error || "Failed to load announcements");
   };
@@ -51,6 +55,7 @@ export default function Announcement() {
     if (!form.heading || !form.description) {
       return message.warning("Heading and Description are required");
     }
+    dispatch(ShowLoading());
 
     setLoading(true);
     const res = editingId
@@ -66,13 +71,15 @@ export default function Announcement() {
     setForm({ heading: "", description: "" });
     setEditingId(null);
     fetchAll();
+    dispatch(HideLoading());
+
   };
 
   const handleDelete = async (id) => {
     if (!window.confirm("Delete this announcement?")) return;
-    setLoading(true);
+    dispatch(ShowLoading());
     const res = await deleteAnnouncement(id);
-    setLoading(false);
+    dispatch(HideLoading());
 
     if (res.success === false)
       return message.error(res.error || "Delete failed");
