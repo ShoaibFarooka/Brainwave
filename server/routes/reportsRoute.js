@@ -195,26 +195,28 @@ router.get("/get-all-reports-for-ranking", authMiddleware, async (req, res) => {
           ]
         }
       },
-      // Stage 6: Group by user and exam for distinct count
+      // Stage 6: Group by user and exam for distinct score & attempts
       {
         $group: {
-          _id: {
-            user: "$user",
-            exam: "$exam"
-          },
-          count: { $sum: 1 },
+          _id: { user: "$user", exam: "$exam" },
+          maxScore: { $max: "$result.score" },
+          totalMarks: { $first: "$examDetails.totalMarks" },
+          attempts: { $sum: 1 },
           userDetails: { $first: "$userDetails" }
         }
       },
-      // Stage 7: Group by user to get total score
+      // Stage 7: Group by user to compute aggregates
       {
         $group: {
           _id: "$_id.user",
+          totalMaxScores: { $sum: "$maxScore" },
+          totalPossibleScores: { $sum: "$totalMarks" },
+          retryCount: { $sum: { $subtract: ["$attempts", 1] } },
           score: { $sum: 1 },
           userDetails: { $first: "$userDetails" }
         }
       },
-      // Stage 8: Project final output
+      // Stage 8: Project final output with rankingScore
       {
         $project: {
           userId: "$_id",
@@ -223,10 +225,30 @@ router.get("/get-all-reports-for-ranking", authMiddleware, async (req, res) => {
           userSchool: "$userDetails.school",
           userClass: "$userDetails.class",
           score: 1,
+          retryCount: 1,
+          scoreRatio: {
+            $cond: [
+              { $gt: ["$totalPossibleScores", 0] },
+              { $divide: ["$totalMaxScores", "$totalPossibleScores"] },
+              0
+            ]
+          },
+          rankingScore: {
+            $subtract: [
+              {
+                $cond: [
+                  { $gt: ["$totalPossibleScores", 0] },
+                  { $divide: ["$totalMaxScores", "$totalPossibleScores"] },
+                  0
+                ]
+              },
+              { $divide: ["$retryCount", 10] }
+            ]
+          },
           _id: 0
         }
       },
-      // Stage 9: Sort results
+      // Stage 9: Sort by rankingScore then name
       {
         $sort: {
           score: -1,
