@@ -55,7 +55,7 @@ export default function AnnouncementModal() {
                     pagination={{ clickable: true }}
                 >
                     {announcements.map(({ heading, description }, i) => (
-                        <SwiperSlide key={i}>
+                        <SwiperSlide className="px-6" key={i}>
                             <h2 className="announce-title">{heading}</h2>
                             <p className="announce-body">{description}</p>
                         </SwiperSlide>

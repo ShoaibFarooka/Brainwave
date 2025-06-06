@@ -13,7 +13,7 @@
     max-width: 580px;
     background: #fff;
     border-radius: 12px;
-    padding: 2.5rem 2rem 2.5rem;
+    padding: 2.5rem 1rem 2.5rem;
     position: relative;
     box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
 }
@@ -41,6 +41,7 @@
     min-height: 100px;
     text-align: center;
     line-height: 1.4;
+    padding: 0px 25px;
 }
 
 .swiper-button-next::after,

@@ -38,6 +38,7 @@ function Quiz() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const { user } = useSelector((state) => state.user);
+  const [lgSize, setLgSize] = useState(8);
 
   const availableClasses =
     user?.schoolType === "primary" ? primaryClasses : secondaryClasses;
@@ -50,6 +51,23 @@ function Quiz() {
       setSelectedClass(defaultSelectedClass);
     }
   }, [user, availableClasses]);
+
+  useEffect(() => {
+    const updateLgSize = () => {
+      setLgSize(window.innerWidth < 1380 ? 9 : 7);
+    };
+
+    // Set initial lg size
+    updateLgSize();
+
+    // Add event listener for window resize
+    window.addEventListener("resize", updateLgSize);
+
+    // Cleanup event listener on component unmount
+    return () => {
+      window.removeEventListener("resize", updateLgSize);
+    };
+  }, []);
 
   const handleClassChange = (selectedOption) => {
     setSelectedClass(selectedOption);
@@ -147,7 +165,7 @@ function Quiz() {
   };
 
   const shouldRenderFilteredExams = filteredExams.length < exams.length;
-  
+
   return (
     user && (
       <div style={{ minHeight: "80vh", paddingBottom: '20px' }}>
@@ -198,7 +216,7 @@ function Quiz() {
             );
 
             return (
-              <Col xs={24} sm={12} md={8} lg={7} key={index}>
+              <Col xs={24} sm={12} md={9} lg={lgSize} key={index}>
                 <div
                   style={{
                     height: "100%",
@@ -226,11 +244,13 @@ function Quiz() {
                     {exam?.name}
                   </h1>
 
-                  <span style={{ position: 'absolute', top: '20px', right: '30px', fontSize: '14px', fontWeight: 'bold', color: examReport?.result?.verdict?.toLowerCase() === "fail"
-                    ? "#FE8267"
-                    : examReport?.result?.verdict?.toLowerCase() === "pass"
-                      ? "#43C46C"
-                      : "#0E8FE9" }}>
+                  <span style={{
+                    position: 'absolute', top: '20px', right: '30px', fontSize: '14px', fontWeight: 'bold', color: examReport?.result?.verdict?.toLowerCase() === "fail"
+                      ? "#FE8267"
+                      : examReport?.result?.verdict?.toLowerCase() === "pass"
+                        ? "#43C46C"
+                        : "#0E8FE9"
+                  }}>
                     {examReport?.result?.verdict?.toLowerCase() === "fail"
                       ? "Failed"
                       : examReport?.result?.verdict?.toLowerCase() === "pass"
