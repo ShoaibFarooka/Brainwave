@@ -13,7 +13,7 @@ import useWindowSize from "react-use/lib/useWindowSize";
 import PassSound from "../../../assets/pass.mp3";
 import FailSound from "../../../assets/fail.mp3";
 import TextArea from "antd/es/input/TextArea";
-import { chatWithChatGPTToGetAns } from "../../../apicalls/chat";
+import { chatWithChatGPTToExplainAns, chatWithChatGPTToGetAns } from "../../../apicalls/chat";
 
 function WriteExam() {
   const [examData, setExamData] = React.useState(null);
@@ -31,6 +31,7 @@ function WriteExam() {
   const { user } = useSelector((state) => state.user);
   const [isMobile, setIsMobile] = useState(false);
   const { width, height } = useWindowSize();
+  const [explanations, setExplanations] = useState({});
 
   const getExamData = async () => {
     try {
@@ -52,50 +53,6 @@ function WriteExam() {
     }
   };
 
-  // const calculateResult = async () => {
-  //   try {
-  //     let correctAnswers = [];
-  //     let wrongAnswers = [];
-
-  //     questions.forEach((question, index) => {
-  //       if (question?.correctOption === selectedOptions[index]) {
-  //         correctAnswers.push(question);
-  //       } else {
-  //         wrongAnswers.push(question);
-  //       }
-  //     });
-
-  //     let verdict = "Pass";
-  //     if (correctAnswers.length < examData.passingMarks) {
-  //       verdict = "Fail";
-  //     }
-
-  //     const tempResult = {
-  //       correctAnswers,
-  //       wrongAnswers,
-  //       verdict,
-  //     };
-  //     setResult(tempResult);
-  //     dispatch(ShowLoading());
-  //     const response = await addReport({
-  //       exam: params.id,
-  //       result: tempResult,
-  //       user: user._id,
-  //     });
-  //     dispatch(HideLoading());
-  //     if (response.success) {
-  //       setView("result");
-  //       window.scrollTo(0, 0);
-  //       new Audio(verdict === "Pass" ? PassSound : FailSound).play();
-  //     } else {
-  //       message.error(response.message);
-  //     }
-  //   } catch (error) {
-  //     dispatch(HideLoading());
-  //     message.error(error.message);
-  //   }
-  // };
-
 
   const checkFreeTextAnswers = async (payload) => {
     if (!payload.length) return [];
@@ -103,14 +60,10 @@ function WriteExam() {
     return data;
   };
 
-  const explainWrongAnswers = async (payload) => {
-    if (!payload.length) return [];
-    const { data } = await chatWithChatGPTToGetAns(payload);
-    return data;
-  };
-
   const calculateResult = async () => {
     try {
+      dispatch(ShowLoading());
+
       // 1️⃣ Build payload for Free Text questions
       const freeTextPayload = [];
       const indexMap = [];
@@ -182,20 +135,6 @@ function WriteExam() {
         }
       });
 
-      // 4️⃣ Get GPT explanations for all wrong answers
-      if (wrongPayload.length) {
-        const explain = await explainWrongAnswers(wrongPayload);
-        const reasonMap = {};
-
-        explain.forEach((r) => {
-          if (r.result?.reason) reasonMap[r.question] = r.result.reason;
-        });
-
-        wrongAnswers.forEach((w) => {
-          w.reason = reasonMap[w.name] || w.reason || "";
-        });
-      }
-
       // 5️⃣ Final result
       const verdict = correctAnswers.length >= examData.passingMarks ? "Pass" : "Fail";
       const tempResult = { correctAnswers, wrongAnswers, verdict };
@@ -208,7 +147,6 @@ function WriteExam() {
         result: tempResult,
         user: user._id,
       });
-      dispatch(HideLoading());
 
       if (response.success) {
         setView("result");
@@ -216,6 +154,33 @@ function WriteExam() {
         new Audio(verdict === "Pass" ? PassSound : FailSound).play();
       } else {
         message.error(response.message);
+      }
+      dispatch(HideLoading());
+
+    } catch (error) {
+      dispatch(HideLoading());
+      message.error(error.message);
+    }
+  };
+
+  const fetchExplanation = async (question, expectedAnswer, userAnswer, imageUrl) => {
+    try {
+      dispatch(ShowLoading());
+      const response = await chatWithChatGPTToExplainAns({
+        question,
+        expectedAnswer,
+        userAnswer,
+        imageUrl,
+      });
+      dispatch(HideLoading());
+
+      if (response.success) {
+        setExplanations((prev) => ({
+          ...prev,
+          [question]: response.explanation,
+        }));
+      } else {
+        message.error(response.error || "Failed to fetch explanation.");
       }
     } catch (error) {
       dispatch(HideLoading());
@@ -506,11 +471,28 @@ function WriteExam() {
                       : question.correctOption}
                   </h1>
 
-                  {/* reason line – only for wrong answers and when GPT gave one */}
-                  {!isCorrect && wrongObj?.reason && (
+                  {explanations[question.name] && (
                     <h1 className={isMobile ? "text-sm" : "text-md"}>
-                      Reason : {wrongObj.reason}
+                      Explanation : {explanations[question.name]}
                     </h1>
+                  )}
+
+                  {/* reason line – only for wrong answers and when GPT gave one */}
+                  {!explanations[question.name] && !isCorrect && (
+                    <button
+                    style={{width:'fit-content'}}
+                      className="primary-contained-btn"
+                      onClick={() =>
+                        fetchExplanation(
+                          question.name,
+                          question.correctOption,
+                          selectedOptions[index],
+                          question.image || null
+                        )
+                      }
+                    >
+                      Give Reason
+                    </button>
                   )}
 
                   {/* image if available */}

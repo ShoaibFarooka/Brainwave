@@ -101,7 +101,7 @@ router.post("/check-answer", async (req, res) => {
           role: "system",
           content:
             'You are an examiner. Compare the student\'s answer with the expected answer. ' +
-            'Reply ONLY with valid JSON: {"isCorrect": true/false, "reason": "short explanation"}.',
+            'Reply ONLY with valid JSON: {"isCorrect": true/false}.',
         },
         {
           role: "user",
@@ -152,6 +152,65 @@ router.post("/check-answer", async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
+
+router.post("/explain-answer", async (req, res) => {
+  try {
+    const { question, expectedAnswer, userAnswer, imageUrl } = req.body;
+
+    if (!question || !expectedAnswer || !userAnswer) {
+      return res.status(400).json({
+        success: false,
+        error: "question, expectedAnswer, and userAnswer are required",
+      });
+    }
+
+    const messages = [
+      {
+        role: "system",
+        content:
+          "You are a kind and helpful math teacher. When given a question, the correct answer, the student's answer, and optionally an image, explain why the student's answer is incorrect in just 1–2 polite, beginner-friendly lines. Also mention the correct method or reasoning briefly.",
+      },
+
+      {
+        role: "user",
+        content: `
+QUESTION: ${question}
+EXPECTED ANSWER: ${expectedAnswer}
+STUDENT ANSWER: ${userAnswer}
+${imageUrl ? `IMAGE URL: ${imageUrl}` : ""}
+Please provide a short and kind explanation (1–2 lines) why the student's answer is wrong and a brief reference to the correct method.
+  `.trim(),
+      },
+    ];
+
+    // GPT-4o request
+    const { data } = await axios.post(
+      "https://api.openai.com/v1/chat/completions",
+      {
+        model: "gpt-4o",
+        messages,
+        temperature: 0.7,
+      },
+      {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+        },
+      }
+    );
+
+    const explanation = data.choices[0].message.content.trim();
+
+    res.status(200).json({
+      success: true,
+      explanation,
+    });
+  } catch (error) {
+    console.error("Explain-answer error:", error.message);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 
 
 module.exports = router;
