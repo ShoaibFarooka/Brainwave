@@ -188,18 +188,18 @@ router.get("/get-all-reports-for-ranking", authMiddleware, async (req, res) => {
       },
       // Stage 5: Match conditions
       {
-        $match: {
-          $and: [
-            { "result.verdict": "Pass" },
-            matchConditions
-          ]
-        }
+        $match: matchConditions
       },
+
       // Stage 6: Group by user and exam for distinct score & attempts
       {
         $group: {
           _id: { user: "$user", exam: "$exam" },
-          maxScore: { $max: "$result.score" },
+          maxScore: {
+            $max: {
+              $cond: [{ $eq: ["$result.verdict", "Pass"] }, "$result.score", 0]
+            }
+          },
           totalMarks: { $first: "$examDetails.totalMarks" },
           attempts: { $sum: 1 },
           userDetails: { $first: "$userDetails" }
@@ -213,7 +213,13 @@ router.get("/get-all-reports-for-ranking", authMiddleware, async (req, res) => {
           totalPossibleScores: { $sum: "$totalMarks" },
           retryCount: { $sum: { $subtract: ["$attempts", 1] } },
           score: { $sum: 1 },
-          userDetails: { $first: "$userDetails" }
+          userDetails: { $first: "$userDetails" },
+          passedExamsCount: {
+            $sum: {
+              $cond: [{ $gt: ["$maxScore", 0] }, 1, 0]
+            }
+          }
+
         }
       },
       // Stage 8: Project final output with rankingScore
