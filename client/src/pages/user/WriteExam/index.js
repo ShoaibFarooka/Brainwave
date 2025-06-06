@@ -498,7 +498,7 @@ function WriteExam() {
                   </h1>
 
                   {/* correct answer line */}
-                  <h1 className={isMobile ? "text-sm" : "text-md"}>
+                  <h1 className={isMobile ? "text-sm" : "text-md"} style={{ color: "white" }}>
                     Correct Answer :{" "}
                     {question.answerType === "Options"
                       ? `${question.correctOption} ${question.options?.[question.correctOption] || ""

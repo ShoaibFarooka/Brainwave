@@ -1,6 +1,7 @@
 import { message } from "antd";
 import React, { useEffect, useState, useRef } from "react";
 import Flag from "../assets/tanzania-flag.png";
+import Logo2 from "../assets/logo-2.png";
 import { getUserInfo } from "../apicalls/users";
 import { useDispatch, useSelector } from "react-redux";
 import { SetUser } from "../redux/usersSlice.js";
@@ -316,15 +317,20 @@ function ProtectedRoute({ children }) {
             ></i>
           )}
           <div className="flex items-center gap-1">
+            <img
+              src={Logo2}
+              alt="brainwave"
+              style={{ width: "30px", height: "30px" }}
+            />
             <div
               className={`text-white ${isMobile ? "text-xs" : "text-2xl"}`}
             >
-              BRAINWAVE
+              BRAIN<span style={{ color: "#4EBD38" }}>WAVE</span>
             </div>
             <img
               src={Flag}
               alt="tanzania-flag"
-              style={{ width: "30px", height: "30px" }}
+              style={{ width: "45px", height: "30px" }}
             />
           </div>
           <div>
