@@ -13,6 +13,7 @@ import useWindowSize from "react-use/lib/useWindowSize";
 import PassSound from "../../../assets/pass.mp3";
 import FailSound from "../../../assets/fail.mp3";
 import TextArea from "antd/es/input/TextArea";
+import ContentRenderer from "../../../components/ContentRenderer";
 import { chatWithChatGPTToExplainAns, chatWithChatGPTToGetAns } from "../../../apicalls/chat";
 
 function WriteExam() {
@@ -223,7 +224,7 @@ function WriteExam() {
   console.log(questions, "questions");
   return (
     examData && (
-      <div className="mt-2">
+      <div className="mt-2 pb-2">
         <div className="divider"></div>
         <h1 className={`text-center ${isMobile ? "text-xl" : ""}`}>
           {examData.name}
@@ -453,6 +454,15 @@ function WriteExam() {
                     {index + 1} : {question.name}
                   </h1>
 
+                  {/* image if available */}
+                  {question.image && (
+                    <img
+                      src={question.image}
+                      alt="Question image"
+                      style={{ height: "200px", maxWidth: '300px' }}
+                    />
+                  )}
+
                   {/* submitted answer line */}
                   <h1 className={isMobile ? "text-sm" : "text-md"}>
                     Submitted Answer :{" "}
@@ -473,14 +483,15 @@ function WriteExam() {
 
                   {explanations[question.name] && (
                     <h1 className={isMobile ? "text-sm" : "text-md"}>
-                      Explanation : {explanations[question.name]}
+                      Explanation :
+                      <ContentRenderer text={explanations[question.name]} />
                     </h1>
                   )}
 
                   {/* reason line – only for wrong answers and when GPT gave one */}
                   {!explanations[question.name] && !isCorrect && (
                     <button
-                    style={{width:'fit-content'}}
+                      style={{ width: 'fit-content' }}
                       className="primary-contained-btn"
                       onClick={() =>
                         fetchExplanation(
@@ -493,15 +504,6 @@ function WriteExam() {
                     >
                       Give Reason
                     </button>
-                  )}
-
-                  {/* image if available */}
-                  {question.image && (
-                    <img
-                      src={question.image}
-                      alt="Question image"
-                      style={{ height: "200px", maxWidth: '300px' }}
-                    />
                   )}
                 </div>
               );

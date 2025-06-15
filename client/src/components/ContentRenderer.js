@@ -54,30 +54,6 @@ const ContentRenderer = ({ text }) => {
     logger();
 
     return (
-        // <div>
-        //     {restoredLines.map((line, lineIndex) => (
-        //         <div key={lineIndex}>
-        //             {line.trim() === '' ?
-        //                 <br key={`br-${lineIndex}`} />
-        //                 :
-        //                 line.split(/(\\\(.*?\\\)|\\\[.*?\\\]|(?:\*\*.*?\*\*))/g).map((part, index) => (
-        //                     inlineMathRegex.test(part) ?
-        //                         <InlineMath key={`${lineIndex}-${index}`}>
-        //                             {part.replace(/^\\\(|\\\)$/g, '')}
-        //                         </InlineMath>
-        //                         : blockMathRegex.test(part) ?
-        //                             <BlockMath key={`${lineIndex}-${index}`}>
-        //                                 {part.replace(/\\[\[\]]/g, '')}
-        //                             </BlockMath>
-        //                             : part.startsWith('**') && part.endsWith('**') ?
-        //                                 <span key={`${lineIndex}-${index}`} style={{ whiteSpace: 'pre-wrap' }}><strong>{part.replace(/\*\*/g, '')}</strong></span>
-        //                                 :
-        //                                 <span key={`${lineIndex}-${index}`} style={{ whiteSpace: 'pre-wrap' }}>{part}</span>
-
-        //                 ))}
-        //         </div>
-        //     ))}
-        // </div>
         <div>
             {newRestoredLines.map((line, lineIndex) => (
                 <div key={lineIndex}>

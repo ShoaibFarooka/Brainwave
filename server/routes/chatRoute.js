@@ -100,7 +100,7 @@ router.post("/check-answer", async (req, res) => {
         {
           role: "system",
           content:
-            'You are an examiner. Compare the student\'s answer with the expected answer. ' +
+            'You are an examiner. Compare the student\'s answer with the expected answer. Ignore the format just validate if answer is correct or not. ' +
             'Reply ONLY with valid JSON: {"isCorrect": true/false}.',
         },
         {
@@ -157,10 +157,35 @@ router.post("/explain-answer", async (req, res) => {
   try {
     const { question, expectedAnswer, userAnswer, imageUrl } = req.body;
 
+    // console.log("Image Url: ", imageUrl);
+
     if (!question || !expectedAnswer || !userAnswer) {
       return res.status(400).json({
         success: false,
         error: "question, expectedAnswer, and userAnswer are required",
+      });
+    };
+
+    const customContent = [
+      {
+        type: "text",
+        text: [
+          `QUESTION: ${question}`,
+          `EXPECTED ANSWER: ${expectedAnswer}`,
+          `STUDENT ANSWER: ${userAnswer}`,
+          `Please provide a short and kind explanation (1–2 lines) why the student's answer is wrong, a brief reference to the correct method and steps to solve it if it is math question. Separate explanation with calculations and steps.`
+        ]
+          .filter(Boolean)
+          .join('\n'),
+      },
+    ];
+
+    if (imageUrl) {
+      customContent.push({
+        type: "image_url",
+        image_url: {
+          url: imageUrl,
+        },
       });
     }
 
@@ -168,21 +193,17 @@ router.post("/explain-answer", async (req, res) => {
       {
         role: "system",
         content:
-          "You are a kind and helpful math teacher. When given a question, the correct answer, the student's answer, and optionally an image, explain why the student's answer is incorrect in just 1–2 polite, beginner-friendly lines. Also mention the correct method or reasoning briefly.",
+          "You are a kind and helpful teacher. When given a question, the correct answer, the student's answer, and optionally an image, explain why the student's answer is incorrect in just 1–2 polite, beginner-friendly lines. Also mention the correct method, reasoning briefly and calculations for math question. Separate explanation with calculatons and steps.",
       },
 
       {
         role: "user",
-        content: `
-QUESTION: ${question}
-EXPECTED ANSWER: ${expectedAnswer}
-STUDENT ANSWER: ${userAnswer}
-${imageUrl ? `IMAGE URL: ${imageUrl}` : ""}
-Please provide a short and kind explanation (1–2 lines) why the student's answer is wrong and a brief reference to the correct method.
-  `.trim(),
+        content: customContent
       },
     ];
 
+
+    // console.log("Messages: ", messages);
     // GPT-4o request
     const { data } = await axios.post(
       "https://api.openai.com/v1/chat/completions",
