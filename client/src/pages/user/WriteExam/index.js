@@ -502,7 +502,7 @@ function WriteExam() {
                         )
                       }
                     >
-                      Give Reason
+                      View Detail
                     </button>
                   )}
                 </div>
