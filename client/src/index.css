@@ -8,3 +8,11 @@ body {
   padding: 0;
   margin: 0;
 }
+
+.katex .katex-mathml {
+  width: 0 !important;
+}
+
+.katex-display>.katex {
+  white-space: normal !important;
+}

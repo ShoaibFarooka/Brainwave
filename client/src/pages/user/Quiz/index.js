@@ -169,7 +169,7 @@ function Quiz() {
   return (
     user && (
       <div style={{ minHeight: "80vh", paddingBottom: '20px' }}>
-        <PageTitle title={`Hi ${user.name}, Welcome it's time to study!!`} />
+        <PageTitle title={`Welcome back, ${user.name} Ready to shine today?`} />
         <div className="divider"></div>
 
 

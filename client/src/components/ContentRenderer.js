@@ -1,7 +1,6 @@
 import React from 'react';
 import { InlineMath, BlockMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
-// import './style.css';
 
 const ContentRenderer = ({ text }) => {
     const inlineMathRegex = /\\\(.*?\\\)/g;
@@ -55,7 +54,7 @@ const ContentRenderer = ({ text }) => {
     logger();
 
     return (
-        <div >
+        <div>
             {newRestoredLines.map((line, lineIndex) => (
                 <div key={lineIndex}>
                     {line.trim() === '' ?
