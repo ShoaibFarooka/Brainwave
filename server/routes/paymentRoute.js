@@ -10,44 +10,93 @@ const createSubscription = async (user, plan, response) => {
   const paymentDate = new Date();
 
   try {
-    const SubscriptionData = {
-      user: user._id,
-      activePlan: plan._id,
+    // First, check if a subscription already exists for the user
+    let subscription = await Subscription.findOne({ user: user._id });
+
+    const paymentHistoryEntry = {
+      orderId: response.data.order_id,
+      plan: plan._id,
+      amount: plan.discountedPrice,
       paymentStatus: "pending",
-      status: "pending",
-      paymentHistory: [
-        {
-          orderId: response.data.order_id,
-          plan: plan._id,
-          amount: plan.discountedPrice,
-          paymentStatus: "pending",
-          paymentDate: `${paymentDate.getFullYear()}-${String(
-            paymentDate.getMonth() + 1
-          ).padStart(2, "0")}-${String(paymentDate.getDate()).padStart(
-            2,
-            "0"
-          )}`, // Set the current date
-        },
-      ],
+      paymentDate: `${paymentDate.getFullYear()}-${String(
+        paymentDate.getMonth() + 1
+      ).padStart(2, "0")}-${String(paymentDate.getDate()).padStart(2, "0")}`,
     };
 
-    if (response.data.status === "success") {
-      const newSubscription = await Subscription.create(SubscriptionData);
+    if (subscription) {
+      // Subscription exists, update its status and add new payment history
+      subscription.paymentHistory.push(paymentHistoryEntry);
+      subscription.paymentStatus = "pending";
+      subscription.status = "pending";
+      subscription.endDate = null;
 
-      if (newSubscription) {
-        return newSubscription; // Return the created subscription
-      }
+      await subscription.save();
+      return subscription;
+
     } else {
-      console.log("elc block");
-      throw Error("Payment was not successful.");
+      // No existing subscription, create a new one
+      const SubscriptionData = {
+        user: user._id,
+        activePlan: plan._id,
+        paymentStatus: "pending",
+        status: "pending",
+        paymentHistory: [paymentHistoryEntry],
+      };
+
+      const newSubscription = await Subscription.create(SubscriptionData);
+      return newSubscription;
     }
   } catch (error) {
-    console.log(error, "wssss");
+    console.log(error, "Error in createSubscription");
     throw error;
   }
 };
 
+
+// const createSubscription = async (user, plan, response) => {
+//   const paymentDate = new Date();
+
+//   try {
+//     const SubscriptionData = {
+//       user: user._id,
+//       activePlan: plan._id,
+//       paymentStatus: "pending",
+//       status: "pending",
+//       paymentHistory: [
+//         {
+//           orderId: response.data.order_id,
+//           plan: plan._id,
+//           amount: plan.discountedPrice,
+//           paymentStatus: "pending",
+//           paymentDate: `${paymentDate.getFullYear()}-${String(
+//             paymentDate.getMonth() + 1
+//           ).padStart(2, "0")}-${String(paymentDate.getDate()).padStart(
+//             2,
+//             "0"
+//           )}`, // Set the current date
+//         },
+//       ],
+//     };
+
+//     if (response.data.status === "success") {
+//       const newSubscription = await Subscription.create(SubscriptionData);
+
+//       if (newSubscription) {
+//         return newSubscription; // Return the created subscription
+//       }
+//     } else {
+//       console.log("elc block");
+//       throw Error("Payment was not successful.");
+//     }
+//   } catch (error) {
+//     console.log(error, "wssss");
+//     throw error;
+//   }
+// };
+
 // POST endpoint for initiating payment
+
+
 router.post("/create-invoice", authMiddleware, async (req, res) => {
   const url = "https://api.zeno.africa"; // Zeno API base URL
 
@@ -182,7 +231,11 @@ router.post("/webhook", async (req, res) => {
       ).padStart(2, "0")}-${String(endDate.getDate()).padStart(2, "0")}`;
       subscription.paymentHistory[paymentHistoryIndex].paymentStatus = "paid";
       subscription.paymentStatus = "paid";
-      subscription.startDate = formattedDate;
+
+      if (subscription.paymentHistory.length > 1) {
+        subscription.startDate = formattedDate;
+      }
+
       subscription.endDate = formattedEndDate;
       subscription.status = "active";
     } else {
