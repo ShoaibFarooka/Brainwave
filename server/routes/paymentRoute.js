@@ -232,7 +232,7 @@ router.post("/webhook", async (req, res) => {
       subscription.paymentHistory[paymentHistoryIndex].paymentStatus = "paid";
       subscription.paymentStatus = "paid";
 
-      if (subscription.paymentHistory.length > 1) {
+      if (subscription.paymentHistory.length < 1) {
         subscription.startDate = formattedDate;
       }
 

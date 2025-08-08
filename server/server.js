@@ -17,7 +17,7 @@ const reviewsRoute = require("./routes/reviewsRoute");
 const forumQuestionRoute = require("./routes/forumQuestionRoute");
 const chatgptRoute = require("./routes/chatRoute");
 const awsBucketRoute = require("./uploads/awsBucket");
-const paymentRoute =require("./routes/paymentRoute")
+const paymentRoute = require("./routes/paymentRoute")
 const announcementRoute = require("./routes/announcementRoute");
 
 //Express Middlewares 
@@ -41,9 +41,9 @@ app.use(morgan('short'))
 app.use('/uploads', express.static(path.join(__dirname, 'Photos')));
 app.use((req, res, next) => {
   if (req.originalUrl.startsWith('/api/payment/webhook')) {
-      express.raw({ type: 'application/json' })(req, res, next);
+    express.raw({ type: 'application/json' })(req, res, next);
   } else {
-      express.json()(req, res, next);
+    express.json()(req, res, next);
   }
 });
 
