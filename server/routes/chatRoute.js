@@ -70,6 +70,168 @@ router.post("/chat", async (req, res) => {
   }
 });
 
+// ✔️ NEW – AI ­answer-checker
+router.post("/check-answer", async (req, res) => {
+  try {
+    const questions = req.body;
+
+    if (!Array.isArray(questions) || questions.length === 0) {
+      return res.status(400).json({
+        success: false,
+        error: "Request body must be a non-empty array of questions",
+      });
+    }
+
+    const results = [];
+
+    for (const item of questions) {
+      const { question, expectedAnswer, userAnswer } = item;
+
+      if (!question || !expectedAnswer || !userAnswer) {
+        results.push({
+          question,
+          success: false,
+          error: "question, expectedAnswer and userAnswer are required",
+        });
+        continue;
+      }
+
+      const messages = [
+        {
+          role: "system",
+          content:
+            'You are an examiner. Compare the student\'s answer with the expected answer. Ignore the format just validate if answer is correct or not. ' +
+            'Reply ONLY with valid JSON: {"isCorrect": true/false}.',
+        },
+        {
+          role: "user",
+          content: `QUESTION: ${question}\nEXPECTED ANSWER: ${expectedAnswer}\nSTUDENT ANSWER: ${userAnswer}`,
+        },
+      ];
+
+      try {
+        const { data } = await axios.post(
+          "https://api.openai.com/v1/chat/completions",
+          {
+            model: "gpt-4o",
+            messages,
+            temperature: 0,
+          },
+          {
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+            },
+          }
+        );
+
+        const aiJson = JSON.parse(data.choices[0].message.content.trim());
+
+        results.push({
+          question,
+          expectedAnswer,
+          userAnswer,
+          result: aiJson,
+          success: true,
+        });
+      } catch (innerError) {
+        console.error("OpenAI error:", innerError.message);
+        results.push({
+          question,
+          expectedAnswer,
+          userAnswer,
+          success: false,
+          error: "AI response failed or returned invalid JSON",
+        });
+      }
+    }
+
+    res.status(200).json({ success: true, data: results });
+  } catch (error) {
+    console.error("Answer-check error:", error.message);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+router.post("/explain-answer", async (req, res) => {
+  try {
+    const { question, expectedAnswer, userAnswer, imageUrl } = req.body;
+
+    // console.log("Image Url: ", imageUrl);
+
+    if (!question || !expectedAnswer || !userAnswer) {
+      return res.status(400).json({
+        success: false,
+        error: "question, expectedAnswer, and userAnswer are required",
+      });
+    };
+
+    const customContent = [
+      {
+        type: "text",
+        text: [
+          `QUESTION: ${question}`,
+          `EXPECTED ANSWER: ${expectedAnswer}`,
+          `STUDENT ANSWER: ${userAnswer}`,
+          `Please provide a short and kind explanation (1–2 lines) why the student's answer is wrong, a brief reference to the correct method and steps to solve it if it is math question. Separate explanation with calculations and steps.`
+        ]
+          .filter(Boolean)
+          .join('\n'),
+      },
+    ];
+
+    if (imageUrl) {
+      customContent.push({
+        type: "image_url",
+        image_url: {
+          url: imageUrl,
+        },
+      });
+    }
+
+    const messages = [
+      {
+        role: "system",
+        content:
+          "You are a kind and helpful teacher. When given a question, the correct answer, the student's answer, and optionally an image, explain why the student's answer is incorrect in just 1–2 polite, beginner-friendly lines. Also mention the correct method, reasoning briefly and calculations for math question. Separate explanation with calculatons and steps.",
+      },
+
+      {
+        role: "user",
+        content: customContent
+      },
+    ];
+
+
+    // console.log("Messages: ", messages);
+    // GPT-4o request
+    const { data } = await axios.post(
+      "https://api.openai.com/v1/chat/completions",
+      {
+        model: "gpt-4o",
+        messages,
+        temperature: 0.7,
+      },
+      {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+        },
+      }
+    );
+
+    const explanation = data.choices[0].message.content.trim();
+
+    res.status(200).json({
+      success: true,
+      explanation,
+    });
+  } catch (error) {
+    console.error("Explain-answer error:", error.message);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 
 
 module.exports = router;

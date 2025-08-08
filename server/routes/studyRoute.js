@@ -34,7 +34,7 @@ router.post("/get-study-content", async (req, res) => {
         else if (content === "videos") {
             const videos = await Videos.find(filter);
             if (videos.length > 0 && videos) {
-                res.status(200).json(videos);
+                res.status(200).json(videos.reverse()); // Reverse the order here
             } else {
                 res.status(404).send("Videos Not Found");
             }
